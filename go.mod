@@ -1,4 +1,4 @@
-module github.com/google/docsy-example
+module github.com/traas-stack/kapacity-website
 
 go 1.12
 
