@@ -1,21 +1,14 @@
 {
   "name": "kapacity-website",
   "version": "0.0.1",
-  "description": "kapacity website",
-  "main": "none.js",
+  "description": "Kapacity website and documentation.",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "hugo --minify"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/traas-stack/kapacity-website/issues"
+    "url": "git+https://github.com/traas-stack/kapacity-website.git"
   },
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/traas-stack/kapacity-website/issues"
-  },
-  "homepage": "https://github.com/traas-stack/kapacity-website#readme",
   "devDependencies": {
     "autoprefixer": "^10.4.0",
     "postcss": "^8.3.7",
