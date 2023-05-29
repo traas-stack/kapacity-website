@@ -1,4 +1,4 @@
-baseURL = "/"
+baseURL = "https://kapacity.netlify.app"
 title = "Kapacity"
 
 # Language settings
@@ -61,18 +61,20 @@ anchor = "smart"
 [languages]
 [languages.en]
 title = "Kapacity"
-description = "Cloud Native Intelligent Elastic Capacity"
-languageName ="English"
+languageName = "English"
 # Weight used for sorting.
 weight = 1
-[languages.zh]
+[languages.en.params]
+description = "An open cloud native capacity solution which helps you achieve ultimate resource utilization in an intelligent and risk-free way."
+[languages.zh-cn]
 title = "Kapacity"
-description = "云原生智能弹性容量"
-languageName ="中文"
+languageName = "中文"
 weight = 2
-contentDir = "content/zh"
-time_format_default = "02.01.2006"
-time_format_blog = "02.01.2006"
+contentDir = "content/zh-cn"
+[languages.zh-cn.params]
+description = "Kapacity 旨在为用户提供一套具备完善技术风险能力的、智能且开放的云原生容量技术，帮助用户安全稳定地实现极致降本增效，解决容量相关问题。"
+time_format_default = "2006/01/02"
+time_format_blog = "2006/01/02"
 
 [markup]
   [markup.goldmark]
@@ -111,10 +113,10 @@ version = "0.0"
 
 # A link to latest version of the docs. Used in the "version-banner" partial to
 # point people to the main doc site.
-url_latest_version = "https://example.com"
+url_latest_version = "https://kapacity.netlify.app"
 
 # Repository configuration (URLs for in-page links to opening issues and suggesting changes)
-github_repo = "https://github.com/traas-stack/kapacity"
+github_repo = "https://github.com/traas-stack/kapacity-website"
 # An optional link to a related project repo. For example, the sibling repository where your product code lives.
 github_project_repo = "https://github.com/traas-stack/kapacity"
 
@@ -126,13 +128,13 @@ github_project_repo = "https://github.com/traas-stack/kapacity"
 github_branch= "main"
 
 # Google Custom Search Engine ID. Remove or comment out to disable search.
-gcs_engine_id = "d72aa9b2712488cc3"
+# gcs_engine_id = "d72aa9b2712488cc3"
 
 # Enable Algolia DocSearch
 algolia_docsearch = false
 
 # Enable Lunr.js offline search
-offlineSearch = false
+offlineSearch = true
 
 # Enable syntax highlighting and copy buttons on code blocks with Prism
 prism_syntax_highlighting = true
@@ -142,7 +144,7 @@ prism_syntax_highlighting = true
 #  Set to true to disable breadcrumb navigation.
 breadcrumb_disable = false
 # Set to true to disable the About link in the site footer
-footer_about_disable = false
+footer_about_disable = true
 # Set to false if you don't want to display a logo (/assets/icons/logo.svg) in the top navbar
 navbar_logo = true
 # Set to true if you don't want the top navbar to be translucent when over a `block/cover`, like on the homepage.
@@ -159,8 +161,8 @@ sidebar_search_disable = false
 [params.ui.feedback]
 enable = false
 # The responses that the user sees after clicking "yes" (the page was helpful) or "no" (the page was not helpful).
-yes = 'Glad to hear it! Please <a href="https://github.com/USERNAME/REPOSITORY/issues/new">tell us how we can improve</a>.'
-no = 'Sorry to hear that. Please <a href="https://github.com/USERNAME/REPOSITORY/issues/new">tell us how we can improve</a>.'
+yes = 'Glad to hear it! Please <a href="https://github.com/traas-stack/kapacity-website/issues/new">tell us how we can improve</a>.'
+no = 'Sorry to hear that. Please <a href="https://github.com/traas-stack/kapacity-website/issues/new">tell us how we can improve</a>.'
 
 # Adds a reading time to the top of each doc.
 # If you want this feature, but occasionally need to remove the Reading time from a single page, 
@@ -171,20 +173,20 @@ enable = true
 [params.links]
 # End user relevant links. These will show up on left side of footer and in the community page if you have one.
 [[params.links.user]]
-  name = "User mailing list"
-  url = "https://example.org/mail"
-  icon = "fa fa-envelope"
-  desc = "Discussion and help from your fellow users"
+  name = "GitHub Discussions"
+  url = "https://github.com/traas-stack/kapacity/discussions"
+  icon = "fab fa-github"
+  desc = "Discussion and help from developers and your fellow users."
 [[params.links.user]]
-  name ="Twitter"
-  url = "https://example.org/twitter"
-  icon = "fab fa-twitter"
-  desc = "Follow us on Twitter to get the latest news!"
+  name ="Slack"
+  url = "https://join.slack.com/t/traas-kapacity/shared_invite/zt-1w1esmmk5-bNy3~IuGeCWQ21UmCexcrA"
+  icon = "fab fa-slack"
+  desc = "Chat with developers and other users in #users (mainly in English)."
 [[params.links.user]]
-  name = "Stack Overflow"
-  url = "https://example.org/stack"
-  icon = "fab fa-stack-overflow"
-  desc = "Practical questions and curated answers"
+  name = "DingTalk"
+  url = "https://qr.dingtalk.com/action/joingroup?code=v1,k1,7qkY1oyphgJvdUE4nJ1EcnNvE2JhmoNXBgdVTvD3AX0=&_dt_no_comment=1&origin=11"
+  icon = "fa fa-comments"
+  desc = "Chat with developers and other users (mainly in Chinese). Group Number: 27855025593"
 # Developer relevant links. These will show up on right side of footer and in the community page if you have one.
 [[params.links.developer]]
   name = "GitHub"
@@ -192,15 +194,15 @@ enable = true
   icon = "fab fa-github"
   desc = "Development takes place here!"
 [[params.links.developer]]
-  name = "Slack"
-  url = "https://example.org/slack"
+  name ="Slack"
+  url = "https://join.slack.com/t/traas-kapacity/shared_invite/zt-1w1esmmk5-bNy3~IuGeCWQ21UmCexcrA"
   icon = "fab fa-slack"
-  desc = "Chat with other project developers"
+  desc = "Chat with other developers in #developers (mainly in English)."
 [[params.links.developer]]
-  name = "Developer mailing list"
-  url = "https://example.org/mail"
-  icon = "fa fa-envelope"
-  desc = "Discuss development issues around the project"
+  name = "DingTalk"
+  url = "https://qr.dingtalk.com/action/joingroup?code=v1,k1,7qkY1oyphgJvdUE4nJ1EcnNvE2JhmoNXBgdVTvD3AX0=&_dt_no_comment=1&origin=11"
+  icon = "fa fa-comments"
+  desc = "Chat with other developers (mainly in Chinese). Group Number: 27855025593"
 
 # hugo module configuration
 
@@ -215,4 +217,4 @@ enable = true
     disable = false
   [[module.imports]]
     path = "github.com/google/docsy/dependencies"
-    disable = false    
+    disable = false

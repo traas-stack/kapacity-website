@@ -1,45 +1,55 @@
 +++
 title = "Kapacity"
-linkTitle = "Kapacity"
 
 +++
 
 {{< blocks/cover title="Welcome to Kapacity!" image_anchor="top" color="primary" >}}
-
 <div class="mx-auto">
     <a class="btn btn-lg btn-primary mr-3 mb-4" href="{{< relref "/docs" >}}">
-    Get Started <i class="fas fa-arrow-alt-circle-right ml-2"></i>
+        Learn More <i class="fas fa-arrow-alt-circle-right ml-2"></i>
     </a>
-    <a class="btn btn-lg btn-secondary mr-3 mb-4" href="https://github.com/traas-stack/kapacity.git">
-        Download <i class="fab fa-github ml-2 "></i>
+    <a class="btn btn-lg btn-secondary mr-3 mb-4" href="https://github.com/traas-stack/kapacity">
+        GitHub <i class="fab fa-github ml-2 "></i>
     </a>
-    <p class="lead mt-5" style="font-size: 26px;">A cloud-native intelligent capacity elasticity technology.</p>
+    <p class="lead mt-5" style="font-size: 26px;">
+        An open cloud native capacity solution which helps you achieve ultimate resource utilization in an intelligent and risk-free way.
+    </p>
     {{< blocks/link-down color="info" >}}
 </div>
 {{< /blocks/cover >}}
 
 
 {{% blocks/lead color="primary" %}}
-Kapacity is based on Ant's internal ultra-large-scale production business practice, and aims to provide users with a set of intelligent and open cloud-native capacity technologies with complete technical risk capabilities, helping users to safely and stably achieve extreme cost reduction and efficiency increase, and solve capacity-related problems .
+Kapacity is built upon core ideas and years of experience of the large-scale production capacity system at Ant Group, which saves ~100k cores yearly with high stability and zero downtime, combined with best practices from the cloud native community.
+
+It aims to automate your scaling, mitigate capacity risks, save your effort as well as cost.
 {{% /blocks/lead %}}
 
+
 {{< blocks/section color="white" >}}
-{{% blocks/feature icon="fa-book" title="Introduction" url="/docs" %}}
-Kapacity is a cloud-native intelligent capacity elasticity technology.
+
+{{% blocks/feature icon="fa-anchor" title="Kubernetes Native" url="/docs/getting-started/installation" %}}
+Kapacity is an out-of-the-box add-on of Kubernetes. Easy to install and use for k8s users.
 {{% /blocks/feature %}}
 
-
-{{% blocks/feature icon="fab fa-github" title="Contributing" url="https://github.com/traas-stack/kapacity.git" %}}
-We do a [Pull Request](https://github.com/traas-stack/kapacity/pulls) contributions workflow on **GitHub**. New users are always welcome!
+{{% blocks/feature icon="fa-cubes" title="Intelligent HPA" url="/docs" %}}
+An intelligent, risk-defensive, highly adaptive and customizable substitution for Kubernetes HPA.
 {{% /blocks/feature %}}
 
-
-{{% blocks/feature icon="fa fa-envelope" title="Email" %}}
-If you have a good idea, you can contact us by email: traaskapacity.io@gmail.com
-
+{{% blocks/feature icon="fa-puzzle-piece" title="Open And Extensible" %}}
+Kapacity is born to be an open project which is easy to integrate or extend.
 {{% /blocks/feature %}}
 
+{{% blocks/feature icon="fa-lightbulb" title="And More..." url="/docs/roadmap" %}}
+More exciting features are comming, stay tuned :)
+{{% /blocks/feature %}}
+
+{{% blocks/feature icon="fab fa-github" title="Contributing Welcomed" url="/docs/contribution-guidelines" %}}
+Any form of contributing is warmly welcomed 🤗
+{{% /blocks/feature %}}
+
+{{% blocks/feature icon="fa fa-users" title="Community Open" url="/community" %}}
+Feel free to directly talk to us through community if you have any wish or doubt.
+{{% /blocks/feature %}}
 
 {{< /blocks/section >}}
-
-

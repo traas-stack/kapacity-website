@@ -1,6 +1,5 @@
 ---
-title: "Kapacity Blog"
-linkTitle: "Blog"
+title: "Blog"
 menu:
   main:
     weight: 30
