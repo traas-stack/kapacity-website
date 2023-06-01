@@ -1,30 +1,31 @@
 ---
-title: "使用定时扩缩容"
-linkTitle: "使用定时扩缩容"
-description: "使用定时扩缩容示例"
+title: "Example for Cron Scaling"
+linkTitle: "Example for Cron Scaling"
+description: "Example for Cron Scaling"
 weight: 15
 
 ---
 
-## 前置环境准备
+## Pre-requisites
 
 - Kubernetes cluster
 - Kapacity installed on the cluster
 
-## 安装步骤
+## Steps
 
-### 1.部署测试服务
+### 1.Deploying Test Service
 
-下载 [nginx-statefulset.yaml](https://raw.githubusercontent.com/traas-stack/kapacity/main/examples/nginx-statefulset.yaml)
-文件，并执行以下命令可以快速部署一个 Nginx 服务。 您也可以部署自己的服务，只需要在后边部署 IHPA yaml 时修改下
-ScaleTargetRef 的内容。
+Download [nginx-statefulset.yaml](https://raw.githubusercontent.com/traas-stack/kapacity/main/examples/nginx-statefulset.yaml)
+file, and execute the following command to quickly deploy an Nginx service. You can also deploy your own service, which
+can be modified later when deploying IHPA yaml
+Contents of ScaleTargetRef.
 
 ```bash
 cd <your-file-directory>
 kubectl apply -f nginx-statefulset.yaml
 ```
 
-验证服务部署完成
+Verify service deployment results
 
 ```bash
 kubectl get po
@@ -33,10 +34,11 @@ NAME      READY   STATUS    RESTARTS   AGE
 nginx-0   1/1     Running   0          5s
 ```
 
-### 2.使用定时画像扩缩容
+### 2.Scaling with Cron Portraits
 
-下载或拷贝以下配置到 [cron-portrait-sample.yaml](https://github.com/traas-stack/kapacity/blob/main/examples/autoscaling/cron-portrait-sample.yaml)
-文件，并按照需求修改 Yaml 文件中的 spec.portraitProviders 字段和 spec.scaleTargetRef 字段。
+Download or copy the following configuration
+to [cron-portrait-sample.yaml](https://github.com/traas-stack/kapacity/blob/main/examples/autoscaling/cron-portrait-sample.yaml)
+file, and modify the spec.portraitProviders field and spec.scaleTargetRef field in the Yaml file as required.
 
 ```yaml
 apiVersion: autoscaling.kapacitystack.io/v1alpha1
@@ -78,13 +80,13 @@ spec:
     apiVersion: apps/v1
 ```
 
-执行命令创建 IHPA CR
+Execute command to create IHPA CR
 
 ```bash
 kubectl apply -f cron-portrait-sample.yaml
 ```
 
-查看 IHPA CR 是否创建成功
+View IHPA CR Creation Results
 
 ```bash
 kubectl get ihpa
@@ -93,9 +95,9 @@ NAME                   AGE
 cron-portrait-sample   13s
 ```
 
-### 3.验证结果
+### 3.Validation Results
 
-通过查看 IHPA 的事件您可以看到如下结果：
+By looking at IHPA's events you can see the following results:
 
 ```bash
 kubectl describe ihpa cron-portrait-sample
@@ -111,13 +113,13 @@ Events:
   Normal   UpdateReplicaProfile  3m15s              ihpa_controller  update ReplicaProfile with onlineReplcas: 5 -> 1, cutoffReplicas: 0 -> 0, standbyReplicas: 0 -> 0
 ```
 
-## 清理资源
+## Clean-Up
 
-您可以执行以下命令清理相关资源
+You can execute the following command to clean up related resources
 
 ```bash
 kubectl delete -f cron-portrait-sample.yaml 
 kubectl delete -f nginx-statefulset.yaml 
 ```
 
-如果您使用自己的服务，请您单独清理
+If you use your own service, please clean up separately

@@ -1,30 +1,31 @@
 ---
-title: "使用多阶段灰度扩缩容"
-linkTitle: "使用多阶段灰度扩缩容"
-description: "使用多阶段灰度扩缩容示例"
+title: "Example for Multi-Stage Grayscale Scaling"
+linkTitle: "Example for Multi-Stage Grayscale Scaling"
+description: "Example for Multi-Stage Grayscale Scaling"
 weight: 17
 
 ---
 
-## 前置环境准备
+## Pre-requisites
 
 - Kubernetes cluster
 - Kapacity installed on the cluster
 
-## 安装步骤
+## Steps
 
-### 1.部署测试服务
+### 1.Deploying Test Service
 
-下载 [nginx-statefulset.yaml](https://raw.githubusercontent.com/traas-stack/kapacity/main/examples/nginx-statefulset.yaml)
-文件，并执行以下命令可以快速部署一个 Nginx 服务。 您也可以部署自己的服务，只需要在后边部署 IHPA yaml 时修改下
-ScaleTargetRef 的内容。
+Download [nginx-statefulset.yaml](https://raw.githubusercontent.com/traas-stack/kapacity/main/examples/nginx-statefulset.yaml)
+file, and execute the following command to quickly deploy an Nginx service. You can also deploy your own service, just
+modify it when deploying IHPA yaml later
+Contents of ScaleTargetRef.
 
 ```bash
 cd <your-file-directory>
 kubectl apply -f nginx-statefulset.yaml
 ```
 
-验证服务部署完成
+Verify service deployment results
 
 ```bash
 kubectl get po
@@ -33,15 +34,17 @@ NAME      READY   STATUS    RESTARTS   AGE
 nginx-0   1/1     Running   0          5s
 ```
 
-### 2.使用多阶段灰度扩缩容
+### 2.Use Multi-Stage Grayscale Scaling
 
-下载或复制以下配置到 [gray-strategy-sample.yaml](https://raw.githubusercontent.com/traas-stack/kapacity/main/examples/autoscaling/gray-strategy-sample.yaml)
-文件。该配置里包含2个画像：
+Download or copy the following configuration
+to [gray-strategy-sample.yaml](https://raw.githubusercontent.com/traas-stack/kapacity/main/examples/autoscaling/gray-strategy-sample.yaml)
+document. This configuration contains 2 portraits:
 
-- 静态画像：
-    - 优先级为1，副本数为1
-- 定时画像
-    - 优先级为2，副本数为5，每个小时第0分钟到第10分钟生效
+- Static Portrait：
+    - The priority is 1 and the number of replicas 1
+- Cron Portrait
+    - The priority is 2, the number of replicas is 5, and it takes effect from the 0th minute to the 10th minute of each
+      hour
 
 ```yaml
 apiVersion: autoscaling.kapacitystack.io/v1alpha1
@@ -69,23 +72,24 @@ spec:
   behavior:
     scaleDown:
       grayStrategy:
-        grayState: Cutoff            #灰度变更中间状态
-        changeIntervalSeconds: 10    #每批次变更间隔时间，单位为秒
-        changePercent: 50            #每批次变更粒度，单位为百分比
-        observationSeconds: 60       #从中间状态变更到终态前的观察时间
+        grayState: Cutoff
+        changeIntervalSeconds: 10
+        changePercent: 50
+        observationSeconds: 60
   scaleTargetRef:
     kind: StatefulSet
     name: nginx
     apiVersion: apps/v1
 ```
 
-执行以下命令，生成 IHPA CR
+Execute the following command to generate IHPA CR
 
 ```bash
 kubectl apply -f gray-strategy-sample.yaml
 ```
 
-假如当前时间为第0-9分钟，可以看到定时画像生效(优先级高)，pod 数从1扩容到了5
+If the current time is 0-9 minutes, you can see that the scheduled portrait takes effect (high priority), and the number
+of pods has expanded from 1 to 5
 
 ```bash
 kubectl get po
@@ -98,7 +102,7 @@ nginx-3   1/1     Running   0          37s
 nginx-4   1/1     Running   0          30s
 ```
 
-第10分钟可以看到，2个 pod 变为了 Cutoff 状态
+In the 10th minute, you can see that the 2 pods have changed to the Cutoff state
 
 ```bash
 kubectl get po -L 'kapacitystack.io/pod-state'
@@ -111,7 +115,7 @@ nginx-3   1/1     Running   0          47s     Cutoff
 nginx-4   1/1     Running   0          40s     Cutoff
 ```
 
-再等待10s后，可以看到4个 pod 变为 Cutoff 状态
+After waiting for another 10 seconds, you can see that 4 pods have changed to Cutoff status
 
 ```bash
 kubectl get po -L 'kapacitystack.io/pod-state'
@@ -124,7 +128,7 @@ nginx-3   1/1     Running   0          55s     Cutoff
 nginx-4   1/1     Running   0          48s     Cutoff
 ```
 
-再观察1m后，可以看到 pod 被缩容到1个
+After observing another 1m, you can see that the pod has been scaled down to 1
 
 ```bash
 kubectl get po -L 'kapacitystack.io/pod-state'
@@ -133,7 +137,7 @@ NAME      READY   STATUS    RESTARTS   AGE     POD-STATE
 nginx-0   1/1     Running   0          4m26s
 ```
 
-您也可以通过 IHPA Events 看到缩容的整个流程
+You can also see the entire process of downsizing through IHPA Events
 
 ```bash
 kubectl describe ihpa gray-strategy-sample
@@ -148,9 +152,9 @@ Events:
   Normal  UpdateReplicaProfile  13s    ihpa_controller  update ReplicaProfile with onlineReplcas: 1 -> 1, cutoffReplicas: 4 -> 0, standbyReplicas: 0 -> 0
 ```
 
-## 清理资源
+## Clean-Up
 
-您可以通过执行以下命令清理样例相关资源
+You can clean up the sample related resources by executing the following command
 
 ```bash
 kubectl delete -f gray-strategy-sample.yaml 

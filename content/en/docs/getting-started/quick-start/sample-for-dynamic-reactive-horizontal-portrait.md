@@ -1,31 +1,32 @@
 ---
-title: "使用响应式扩缩容"
-linkTitle: "使用响应式扩缩容"
-description: "使用响应式扩缩容示例"
+title: "Example for Reactive Dynamic Scaling"
+linkTitle: "Example for Reactive Dynamic Scaling"
+description: "Example for Reactive Dynamic Scaling"
 weight: 16
 
 ---
 
-## 前置环境准备
+## Pre-requisites
 
 - Kubernetes cluster
 - Kapacity installed on the cluster
 - Promethues
 
-## 安装步骤
+## Steps
 
-### 1.部署测试服务
+### 1.Deploying Test Service
 
-下载 [nginx-statefulset.yaml](https://raw.githubusercontent.com/traas-stack/kapacity/main/examples/nginx-statefulset.yaml)
-文件，并执行以下命令可以快速部署一个 Nginx 服务。 您也可以部署自己的服务，只需要在后边部署 IHPA yaml 时修改下
-ScaleTargetRef 的内容。
+Download [nginx-statefulset.yaml](https://raw.githubusercontent.com/traas-stack/kapacity/main/examples/nginx-statefulset.yaml)
+file, and execute the following command to quickly deploy an Nginx service. You can also deploy your own service, just
+modify it when deploying IHPA yaml later
+Contents of ScaleTargetRef.
 
 ```bash
 cd <your-file-directory>
 kubectl apply -f nginx-statefulset.yaml
 ```
 
-验证服务部署完成
+Verify service deployment results
 
 ```bash
 kubectl get po
@@ -34,10 +35,11 @@ NAME      READY   STATUS    RESTARTS   AGE
 nginx-0   1/1     Running   0          5s
 ```
 
-### 2.使用响应式画像扩缩容
+### 2.Scaling with Reactive Dynamic Portrait
 
-下载或拷贝以下配置到 [dynamic-portrait-reactive-sample.yaml](https://raw.githubusercontent.com/traas-stack/kapacity/main/examples/autoscaling/dynamic-portrait-reactive-sample.yaml)
-文件。
+Download or copy the following configuration
+to [dynamic-portrait-reactive-sample.yaml](https://raw.githubusercontent.com/traas-stack/kapacity/main/examples/autoscaling/dynamic-portrait-reactive-sample.yaml)
+document.
 
 ```yaml
 apiVersion: autoscaling.kapacitystack.io/v1alpha1
@@ -69,13 +71,13 @@ spec:
     apiVersion: apps/v1
 ```
 
-执行命令创建 IHPA CR
+Execute command to create IHPA CR
 
 ```bash
 kubectl apply -f dynamic-portrait-reactive-sample.yaml
 ```
 
-查看 IHPA CR 是否创建成功
+Check if the IHPA CR is successfully created
 
 ```bash
 kubectl get ihpa
@@ -84,9 +86,9 @@ NAME                               AGE
 dynamic-portrait-reactive-sample   29m
 ```
 
-### 3.压测服务
+### 3.Pressure Test
 
-获取 Nginx 服务暴露的端口号（样例里是32591）
+Obtain the port number exposed by the Nginx service (32591 in the example)
 
 ```bash
 kubectl get service nginx
@@ -95,15 +97,16 @@ NAME         TYPE       CLUSTER-IP     EXTERNAL-IP   PORT(S)         AGE
 nginx        NodePort   10.111.21.74   <none>        80:32591/TCP    13m
 ```
 
-通过压测工具或压测脚本对服务进行压测，比如通过 Apache Benchmark(ab) 进行压力测试，注意 url 中 ip 和 port 替换为您自己的。
+Use a pressure test tool or a pressure test script to perform a pressure test on the service, such as the Apache
+Benchmark (ab) for stress testing. Note that the ip and port in the url are replaced with your own.
 
 ```bash
 ab -n 10000 -c 100 http://<your-node-ip>:<your-port>/index
 ```
 
-### 4.观察结果
+### 4.Validation Results
 
-等待3-10分钟后，通过 IHPA Events 可以看到具体的弹性结果
+After waiting for 3-10 minutes, you can see the specific elastic results through IHPA Events
 
 ```bash
 kubectl describe ihpa dynamic-portrait-reactive-sample
@@ -119,11 +122,11 @@ Events:
   Normal   UpdateReplicaProfile               2m45s              ihpa_controller  update ReplicaProfile with onlineReplcas: 4 -> 1, cutoffReplicas: 0 -> 0, standbyReplicas: 0 -> 0
 ```
 
-## 清理资源
+## Clean-Up
 
-您可以通过执行以下命令清理样例相关资源
+You can clean up sample-related resources by executing the following command
 
 ```bash
-kubectl delete -f <your-file-director>/dynamic-portrait-reactive-sample.yaml 
-kubectl delete -f <your-file-director>/nginx-statefulset.yaml 
+kubectl delete -f dynamic-portrait-reactive-sample.yaml 
+kubectl delete -f nginx-statefulset.yaml 
 ```
