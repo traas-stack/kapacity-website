@@ -46,8 +46,7 @@ make more accurate decisions.
 </div>
 
 Taking the predictive algorithm as an example, in the production environment, the capacity water level of an application
-is usually
-affected by multiple external flows, or even its own scheduled tasks, machine performance, etc., and the relationship
+is usually affected by multiple external flows, or even its own scheduled tasks, machine performance, etc., and the relationship
 between replicas and resource water level may not be linear. This presents a great challenge to replicas prediction
 based on application capacity. So IHPA has introduced a set of predictive algorithms based on machine learning that Ant
 Group has honed in its internal large-scale elastic production practice. Time-series prediction of each piece of

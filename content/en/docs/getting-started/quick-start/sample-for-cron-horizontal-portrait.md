@@ -15,10 +15,10 @@ weight: 15
 
 ### 1.Deploying Test Service
 
-Download [nginx-statefulset.yaml](https://raw.githubusercontent.com/traas-stack/kapacity/main/examples/nginx-statefulset.yaml)
-file, and execute the following command to quickly deploy an Nginx service. You can also deploy your own service, which
-can be modified later when deploying IHPA yaml
-Contents of ScaleTargetRef.
+Download
+the [nginx-statefulset.yaml](https://raw.githubusercontent.com/traas-stack/kapacity/main/examples/nginx-statefulset.yaml)
+file and execute the following command to quickly deploy an Nginx service. You can also deploy your own service, just
+modify the content of ***scaleTargetRef*** when deploying IHPA yaml later.
 
 ```bash
 cd <your-file-directory>
@@ -38,7 +38,8 @@ nginx-0   1/1     Running   0          5s
 
 Download or copy the following configuration
 to [cron-portrait-sample.yaml](https://github.com/traas-stack/kapacity/blob/main/examples/autoscaling/cron-portrait-sample.yaml)
-file, and modify the spec.portraitProviders field and spec.scaleTargetRef field in the Yaml file as required.
+file. If you use other services, please modify the ***portraitProviders*** field and ***scaleTargetRef*** field in the
+Yaml file as required.
 
 ```yaml
 apiVersion: autoscaling.kapacitystack.io/v1alpha1

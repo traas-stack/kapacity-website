@@ -18,7 +18,7 @@ weight: 16
 
 下载 [nginx-statefulset.yaml](https://raw.githubusercontent.com/traas-stack/kapacity/main/examples/nginx-statefulset.yaml)
 文件，并执行以下命令可以快速部署一个 Nginx 服务。 您也可以部署自己的服务，只需要在后边部署 IHPA yaml 时修改下
-ScaleTargetRef 的内容。
+***scaleTargetRef*** 的内容。
 
 ```bash
 cd <your-file-directory>

@@ -11,8 +11,8 @@ description: >
   predict expansion in advance.
 - Support traffic surge identification algorithm, support the identification and emergency response capabilities of
   traffic surge scenarios, and can replace traditional responsive algorithms as application capacity protection.
-- Supports custom portrait access verification, further controls the application rules of the algorithm output portrait,
-  and reduces unexpected risks.
+- Supports custom copy portrait access verification, further controls the application rules of the algorithm output
+  portrait, and reduces unexpected risks.
 - Supports stability check and change fuse capabilities, supports custom index anomaly detection, and automatic pause
   and rollback capabilities after detecting anomalies.
 
@@ -20,7 +20,7 @@ description: >
 
 - It fully supports the IHPA extension framework, and users can independently expand the behaviors and functions of IHPA
   without intrusion.
-- Release Kapacity Agent, which supports Pod Standby state switching, Pod health scoring, etc., further enhances the
+- Launch Kapacity Agent, which supports Pod Standby state switching, Pod health scoring, etc., further enhances the
   multi-level elasticity capability, and serves as the basic capability of the mixed department.
 - Launched Kapacity Scheduler, which supports dynamic scheduling based on Pod resource usage and node resource remaining
   to reduce resource fragmentation problems, and supports more advanced scheduling strategies.

@@ -11,14 +11,25 @@ weight: 12
 
 - Kubernetes 1.19+
 - Helm 3+
-- Cert-manager 1.11+
+- Cert-Manager 1.11+
 - Prometheus
 
 ## 安装流程
 
 ### 安装 CertManager
 
-参考[Cert-Manager官方文档](https://cert-manager.io/docs/installation/helm/)进行安装
+使用 helm 安装 Cert-Manager
+
+```bash
+helm repo add jetstack https://charts.jetstack.io
+helm repo update
+
+helm install \
+  cert-manager jetstack/cert-manager \
+  --namespace cert-manager \
+  --create-namespace \
+  --version v1.12.0 
+```
 
 ### 安装 Prometheus
 
@@ -72,4 +83,5 @@ kapacity-controller-manager   1/1     1            1           3d23h
 ```bash
 helm uninstall kapacity -n kapacity-system
 helm uninstall prometheus -n prometheus
+helm uninstall cert-manager -n cert-manager
 ```

@@ -18,7 +18,18 @@ This document mainly introduces environment preparation and how to quickly insta
 
 ### Installing CertManager
 
-Refer to [Cert-Manager Official Documentation](https://cert-manager.io/docs/installation/helm/) to install
+Cert-Manager can be installed using helm
+
+```bash
+helm repo add jetstack https://charts.jetstack.io
+helm repo update
+
+helm install \
+  cert-manager jetstack/cert-manager \
+  --namespace cert-manager \
+  --create-namespace \
+  --version v1.12.0 
+```
 
 ### Installing Prometheus
 
@@ -72,3 +83,5 @@ kapacity-controller-manager   1/1     1            1           3d23h
 ```bash
 helm uninstall kapacity -n kapacity-system
 helm uninstall prometheus -n prometheus
+helm uninstall cert-manager -n cert-manager
+```

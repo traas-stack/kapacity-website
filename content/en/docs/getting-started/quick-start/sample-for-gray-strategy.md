@@ -15,10 +15,10 @@ weight: 17
 
 ### 1.Deploying Test Service
 
-Download [nginx-statefulset.yaml](https://raw.githubusercontent.com/traas-stack/kapacity/main/examples/nginx-statefulset.yaml)
-file, and execute the following command to quickly deploy an Nginx service. You can also deploy your own service, just
-modify it when deploying IHPA yaml later
-Contents of ScaleTargetRef.
+Download
+the [nginx-statefulset.yaml](https://raw.githubusercontent.com/traas-stack/kapacity/main/examples/nginx-statefulset.yaml)
+file and execute the following command to quickly deploy an Nginx service. You can also deploy your own service, just
+modify the content of ***scaleTargetRef*** when deploying IHPA yaml later.
 
 ```bash
 cd <your-file-directory>
