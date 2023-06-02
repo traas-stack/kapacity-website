@@ -29,8 +29,9 @@ Kubernetes HPA 是一项用于对云原生工作负载进行自动扩缩容的�
 容量弹性本质上是一个数据驱动决策的过程，而非简单的扩缩容。除了简单的定时和响应式算法，Kapacity IHPA
 支持在不同场景因地制宜地使用不同的算法，除了简单的定时与响应式算法，其还支持多种智能算法如预测式、突增式等，同时支持按自定义配置策略对算法进行组合生效，从而能够适配更多业务场景、扩缩容的决策也更为精准。
 
-
-<img src="decision-algorithm.png" width="400"/>
+<div style="position: relative; left: 100px">
+    <img src="decision-algorithm.png" width="500"/>
+</div>
 
 以预测式算法为例，在生产上，应用的容量水位通常会受到多条外部流量，甚至是自身定时任务、机器性能等的影响，且副本数与容量水位之间的关系也未必是线性，这为基于应用容量的副本数预测带来了很大的挑战。
 为此，Kapacity IHPA 引入了蚂蚁在内部大规模弹性生产实践中打磨出的一套基于机器学习的预测式算法，该算法首先通过 Swish Net for
@@ -55,7 +56,9 @@ Pod 状态转换提升弹性效率并降低弹性风险。
   Online 状态。
 - Deleted：Pod 被真正删除的状态。实际到了该状态 Pod 本身就不存在了。
 
-<img src="state-change.png" width="500"/>
+<div style="position: relative; left: 100px">
+    <img src="state-change.png" width="500"/>
+</div>
 
 ### 稳定性保障
 
