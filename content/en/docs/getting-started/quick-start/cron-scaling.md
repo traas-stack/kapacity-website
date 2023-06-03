@@ -1,7 +1,7 @@
 ---
-title: "Example for Cron Scaling"
-linkTitle: "Example for Cron Scaling"
-description: "Example for Cron Scaling"
+title: "Cron Scaling"
+linkTitle: "Cron Scaling"
+description: "Cron Scaling"
 weight: 15
 
 ---
@@ -15,10 +15,9 @@ weight: 15
 
 ### 1.Deploying Test Service
 
-Download
-the [nginx-statefulset.yaml](https://raw.githubusercontent.com/traas-stack/kapacity/main/examples/nginx-statefulset.yaml)
-file and execute the following command to quickly deploy an Nginx service. You can also deploy your own service, just
-modify the content of ***scaleTargetRef*** when deploying IHPA yaml later.
+Download the [nginx-statefulset.yaml](/examples/nginx-statefulset.yaml) file and execute the following command to
+quickly deploy an Nginx service. You can also deploy your own service, just modify the content of ***scaleTargetRef***
+when deploying IHPA yaml later.
 
 ```bash
 cd <your-file-directory>
@@ -37,7 +36,7 @@ nginx-0   1/1     Running   0          5s
 ### 2.Scaling with Cron Portraits
 
 Download or copy the following configuration
-to [cron-portrait-sample.yaml](https://github.com/traas-stack/kapacity/blob/main/examples/autoscaling/cron-portrait-sample.yaml)
+to [cron-portrait-sample.yaml](/examples/ihpa/cron-portrait-sample.yaml)
 file. If you use other services, please modify the ***portraitProviders*** field and ***scaleTargetRef*** field in the
 Yaml file as required.
 

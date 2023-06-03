@@ -29,17 +29,16 @@ Kubernetes HPA 是一项用于对云原生工作负载进行自动扩缩容的�
 容量弹性本质上是一个数据驱动决策的过程，而非简单的扩缩容。除了简单的定时和响应式算法，Kapacity IHPA
 支持在不同场景因地制宜地使用不同的算法，除了简单的定时与响应式算法，其还支持多种智能算法如预测式、突增式等，同时支持按自定义配置策略对算法进行组合生效，从而能够适配更多业务场景、扩缩容的决策也更为精准。
 
-<div style="position: relative; left: 100px">
-    <img src="decision-algorithm.png" width="500"/>
-</div>
+
+<img src="/images/zh-cn/decision-algorithm.png" width="500"/>
 
 以预测式算法为例，在生产上，应用的容量水位通常会受到多条外部流量，甚至是自身定时任务、机器性能等的影响，且副本数与容量水位之间的关系也未必是线性，这为基于应用容量的副本数预测带来了很大的挑战。
 为此，Kapacity IHPA 引入了蚂蚁在内部大规模弹性生产实践中打磨出的一套基于机器学习的预测式算法，该算法首先通过 Swish Net for
 Time Series Forecasting (SNTSF) 对潜在影响应用容量水位的多条流量进行时序预测，随后通过 Linear-Residual Model
 将这些组分流量和应用容量及其对应副本数进行综合建模，最终推理得出应用未来的推荐副本数。
 
-<img src="prediction-algorithm.png" width="500" />
-<img src="cal-replica_algorithm.png" width="400" />
+<img src="/images/zh-cn/prediction-algorithm.png" width="450" />
+<img src="/images/zh-cn/cal-replica_algorithm.png" width="350" />
 
 通过这种流量驱动容量的思想，该算法能够很好地应对生产上多周期流量、趋势变化流量、多条流量共同影响容量、容量与副本数呈非线性关系等复杂场景，通用性和准确性兼具。
 
@@ -55,10 +54,8 @@ Pod 状态转换提升弹性效率并降低弹性风险。
 - Standby：Pod 资源被换出，保持在低水位的状态。相比于 Cutoff 状态，该状态能够实际释放 Pod 所占用资源供其他应用使用，也支持分钟级回滚到
   Online 状态。
 - Deleted：Pod 被真正删除的状态。实际到了该状态 Pod 本身就不存在了。
-
-<div style="position: relative; left: 100px">
-    <img src="state-change.png" width="500"/>
-</div>
+  
+<img src="/images/zh-cn/state-change.png" width="500"/>
 
 ### 稳定性保障
 
@@ -72,7 +69,7 @@ Cutoff/Standby 中间态实现多阶段灰度，提升应急回滚速度，进�
 Pod 为 Cutoff 状态，每次变更都会间隔一定时间进行稳定性观察。当待缩容 Pod 都切换为 Cutoff
 状态后会进入最终的额外稳定性观察期，如果最后没有发现风险则再执行真正的缩容，如果期间发现风险，则能够快速回滚到 Online 状态。
 
-<img src="grayscale-change.png" width="800" />
+<img src="/images/zh-cn/gray-scaling.png" width="800" />
 
 #### 稳定性检查与变更熔断
 

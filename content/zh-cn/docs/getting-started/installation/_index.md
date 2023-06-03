@@ -27,6 +27,7 @@ helm repo update
 helm install \
   cert-manager jetstack/cert-manager \
   --namespace cert-manager \
+  --set installCRDs=true \
   --create-namespace \
   --version v1.12.0 
 ```
@@ -46,6 +47,17 @@ helm install prometheus  prometheus-community/prometheus -n prometheus  \
    --set prometheus-node-exporter.hostRootFsMount.enabled=false
 ```
 
+查看 Prometheus Server 的 ClusterIp 和 端口
+
+```bash
+kubectl -nprometheus get svc
+
+NAME                                  TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
+prometheus-kube-state-metrics         ClusterIP   10.97.190.94     <none>        8080/TCP   2d2h
+prometheus-prometheus-node-exporter   ClusterIP   10.100.121.134   <none>        9100/TCP   2d2h
+prometheus-server                     ClusterIP   10.104.214.48    <none>        80/TCP     2d2h
+```
+
 ### 安装 Kapacity
 
 使用 Helm 安装 Kapacity
@@ -53,7 +65,7 @@ helm install prometheus  prometheus-community/prometheus -n prometheus  \
 - 添加Helm仓库地址
 
 ```bash
-helm repo add kapacity https://kapacity.github.io/charts
+helm repo add kapacity https://traas-stack.github.io/kapacity-charts
 ```
 
 - 更新 Helm 仓库到最新版本
@@ -64,9 +76,12 @@ helm repo update
 
 - 使用 Helm Charts 安装 Kapacity
 
+安装 Kapacity 时 prometheus-address 参数可以通过 [安装 Prometheus](#安装-prometheus) 步骤获取
+
 ```bash
-kubectl create namespace kapacity-system
-helm install kapacity kapacity --namespace kapacity-system
+helm install kapacity-manager kapacity -n kapacity-system \
+  --create-namespace \
+  --set prometheus.address=http://<prometheus-server-clusterip>:<port> 
 ```
 
 - 验证 Kapacity 安装是否成功

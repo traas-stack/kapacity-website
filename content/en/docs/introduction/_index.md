@@ -41,9 +41,7 @@ it also supports a variety of intelligent algorithms such as predictive, burst, 
 combined to take effect based on customized configuration strategy, so that more service scenarios can be adapted to
 make more accurate decisions.
 
-<div style="position: relative; left: 100px">
-  <img src="decision-algorithm.png" width="500"/>
-</div>
+<img src="/images/en/decision-algorithm.png" width="500"/>
 
 Taking the predictive algorithm as an example, in the production environment, the capacity water level of an application
 is usually affected by multiple external flows, or even its own scheduled tasks, machine performance, etc., and the relationship
@@ -54,8 +52,8 @@ traffic, and then use the Linear-Residual Model to comprehensively model these c
 capacity and the corresponding replicas, and finally infer the recommended number of copies for the application
 in the future.
 
-<img src="prediction-algorithm.png" width="500" />
-<img src="cal-replica_algorithm.png" width="400" />
+<img src="/images/en/prediction-algorithm.png" width="450" />
+<img src="/images/en/cal-replica_algorithm.png" width="350" />
 
 Through this idea of traffic-driven capacity, the algorithm can well deal with complex scenarios such as multi-period
 traffic in production, trend-changing traffic, multiple traffic affecting capacity, and capacity has a nonlinear
@@ -76,21 +74,19 @@ flexible Pod state transitions. Currently, Kapacity defines the following Pod st
   actually release the resources occupied by the Pod for use by other applications, and also supports minute-level
   rollback to the Online state.
 - Deleted: The status of the Pod being actually deleted. In fact, the Pod itself does not exist in this state.
-
-<div style="position: relative; left: 100px">
-    <img src="state-change.png" width="500"/>
-</div>
+  
+<img src="/images/en/state-change.png" width="500"/>
 
 ### High Stability
 
 IHPA has absorbed the experience and lessons of Ant Group's large-scale elastic production practice for many years, and
 has accumulated a unique ability to guarantee the stability of elastic changes.
 
-#### Grayscale Scaling
+#### Multi-Stage Gray Scaling
 
-IHPA supports the use of custom grayscale batch change strategies when performing expansion and reduction, which
+IHPA supports the use of customized gray change strategy when performing expansion and shrinkage, which
 minimizes the explosion radius of elastic changes; at the same time, it also supports adding the Cutoff/Standby
-intermediate state mentioned above to achieve multi-stage grayscale , increase the speed of emergency rollback, and
+intermediate state mentioned above to achieve multi-stage gray scaling , increase the speed of emergency rollback, and
 further reduce the risk of elastic changes. The following uses Cutoff as an example of a gray scale reduction in the
 intermediate state: the workload of an application originally had 6 Pods, and it is expected to shrink to 2. At this
 time, the Pods will be automatically changed to Cutoff in batches according to the user's gray scale configuration.
@@ -99,7 +95,7 @@ switched to the Cutoff state, they will enter the final additional stability obs
 in the end, the real scale-in will be performed. If risks are found during the period, they can be quickly rolled back
 to the Online state.
 
-<img src="grayscale-change.png" width="800" />
+<img src="/images/en/gray-scaling.png" width="800" />
 
 #### Stability Check and Change Fuse
 

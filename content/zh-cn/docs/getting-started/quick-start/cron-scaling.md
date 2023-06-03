@@ -15,9 +15,8 @@ weight: 15
 
 ### 1.部署测试服务
 
-下载 [nginx-statefulset.yaml](https://raw.githubusercontent.com/traas-stack/kapacity/main/examples/nginx-statefulset.yaml)
-文件，并执行以下命令可以快速部署一个 Nginx 服务。 您也可以部署自己的服务，只需要在后边部署 IHPA yaml 时修改下
-***scaleTargetRef*** 的内容。
+下载 [nginx-statefulset.yaml](/examples/nginx-statefulset.yaml) 文件，并执行以下命令可以快速部署一个 Nginx 服务。
+您也可以部署自己的服务，只需要在后边部署 IHPA yaml 时修改下 ***scaleTargetRef*** 的内容。
 
 ```bash
 cd <your-file-directory>
@@ -35,7 +34,7 @@ nginx-0   1/1     Running   0          5s
 
 ### 2.使用定时画像扩缩容
 
-下载或拷贝以下配置到 [cron-portrait-sample.yaml](https://github.com/traas-stack/kapacity/blob/main/examples/autoscaling/cron-portrait-sample.yaml)
+下载或拷贝以下配置到 [cron-portrait-sample.yaml](/examples/ihpa/cron-portrait-sample.yaml)
 文件。如果您使用其他服务，请按照需求修改 Yaml 文件中的 ***portraitProviders*** 字段和 ***scaleTargetRef*** 字段。
 
 ```yaml
