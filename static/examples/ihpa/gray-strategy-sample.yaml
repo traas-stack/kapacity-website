@@ -1,0 +1,33 @@
+apiVersion: autoscaling.kapacitystack.io/v1alpha1
+kind: IntelligentHorizontalPodAutoscaler
+metadata:
+  name: static-portrait-sample
+spec:
+  paused: false
+  minReplicas: 0
+  maxReplicas: 10
+  portraitProviders:
+    - type: Static
+      priority: 1
+      static:
+        replicas: 1
+    - type: Cron
+      priority: 2
+      cron:
+        crons:
+        - start: 47 * * * *
+          end: 48 * * * *
+          name: test
+          replicas: 5
+          timeZone: Asia/Shanghai
+  behavior:
+    scaleDown:
+      grayStrategy:
+        grayState: Cutoff
+        changeIntervalSeconds: 30
+        changePercent: 50
+        observationSeconds: 60
+  scaleTargetRef:
+    kind: StatefulSet
+    name: nginx
+    apiVersion: apps/v1
