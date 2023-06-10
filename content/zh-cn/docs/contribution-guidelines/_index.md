@@ -5,25 +5,25 @@ description: >
   了解如何贡献 Kapacity 项目
 ---
 
-Welcome to Kapacity!
+欢迎参与 Kapacity!
 
-Thank you so much for helping Kapacity become better.
+非常感谢您帮助 Kapacity 变得更好。
 
-Please note that contributing code is not the only way of contributing, there are many other forms of contributions that are also welcomed, such as:
+贡献代码其实并不是唯一做出您的贡献的方式，我们也非常欢迎许多其他形式的贡献，例如：
 
-* Answering questions in [GitHub Discussions](https://github.com/traas-stack/kapacity/discussions)
-* Submitting bug report or feature request in [GitHub Issues](https://github.com/traas-stack/kapacity/issues)
-* Reviewing others code in [GitHub Pull Requests](https://github.com/traas-stack/kapacity/pulls)
-* Contributing to [documentations](https://github.com/traas-stack/kapacity-website)
+* 在 [GitHub Discussions](https://github.com/traas-stack/kapacity/discussions) 中回答问题
+* 在 [GitHub Issues](https://github.com/traas-stack/kapacity/issues) 中提交错误报告或新功能请求
+* Review [GitHub Pull Requests](https://github.com/traas-stack/kapacity/pulls) 中的他人代码
+* 为 [文档](https://github.com/traas-stack/kapacity-website) 做出贡献
 
-Here's the guideline for some contribution ways.
+这是一些贡献的指南。
 
-## Submitting issues
+## 提交问题
 
-Before submitting an issue, please check whether there has been similar existing issues and avoid duplicating them.
+在提交问题之前，请检查是否已经存在类似的问题，避免重复。
 
-If you want to report a security vulnerability, make sure to choose the "Report a security vulnerability" option in "New issue". Do not submit it as a normal public issue.
+如果要报告安全漏洞，请务必在 `New issue` 中选择 `Report a security vulnerability` 选项。 不要将其作为普通的公共问题提交。
 
-## Contributing code
+## 贡献代码
 
-For code related contributions, please read the [developer guide](/zh-cn/docs/contribution-guidelines/developer-guide/) to get started.
+代码相关贡献，请阅读[开发者指南](/zh-cn/docs/contribution-guidelines/developer-guide/)。
