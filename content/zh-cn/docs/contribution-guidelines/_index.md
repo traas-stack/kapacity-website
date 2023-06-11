@@ -16,13 +16,13 @@ description: >
 * Review [GitHub Pull Requests](https://github.com/traas-stack/kapacity/pulls) 中的他人代码
 * 为 [文档](https://github.com/traas-stack/kapacity-website) 做出贡献
 
-这是一些贡献的指南。
+以下是一些具体的贡献指南。
 
-## 提交问题
+## 提交 Issue
 
-在提交问题之前，请检查是否已经存在类似的问题，避免重复。
+在提交 Issue 之前，请检查是否已经存在类似的 Issue，避免重复。
 
-如果要报告安全漏洞，请务必在 `New issue` 中选择 `Report a security vulnerability` 选项。 不要将其作为普通的公共问题提交。
+如果要报告安全漏洞，请务必在 `New issue` 中选择 `Report a security vulnerability` 选项。不要将其作为普通的公开 Issue 提交。
 
 ## 贡献代码
 
