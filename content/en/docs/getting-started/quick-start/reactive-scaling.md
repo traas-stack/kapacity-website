@@ -1,130 +1,131 @@
 ---
 title: "Reactive Scaling"
-linkTitle: "Reactive Scaling"
-description: "Reactive Scaling"
 weight: 16
 
 ---
 
-## Pre-requisites
+## Before you begin
 
-- Kubernetes cluster
-- Kapacity installed on the cluster
-- Promethues
+You need to have a Kubernetes cluster with Kapacity and Prometheus installed.
 
-## Steps
+## Run sample workload
 
-### 1.Deploying Test Service
+Download [nginx-statefulset.yaml](/examples/workload/nginx-statefulset.yaml) and run following command to run an NGINX workload.
 
-Download the [nginx-statefulset.yaml](/examples/nginx-statefulset.yaml) file and execute the following command to
-quickly deploy an Nginx service. You can also deploy your own service, just modify the content of ***scaleTargetRef***
-when deploying IHPA yaml later.
-
-```bash
-cd <your-file-directory>
+```shell
 kubectl apply -f nginx-statefulset.yaml
 ```
 
-Verify service deployment results
+Check if the workload is running:
 
-```bash
+```shell
 kubectl get po
+```
 
+```
 NAME      READY   STATUS    RESTARTS   AGE
 nginx-0   1/1     Running   0          5s
 ```
 
-### 2.Scaling with Reactive Dynamic Portrait
+## Create IHPA with dynamic reactive portrait provider
 
-Download or copy the following configuration
-to [dynamic-portrait-reactive-sample.yaml](/examples/ihpa/dynamic-portrait-reactive-sample.yaml) document.
+Download [dynamic-reactive-portrait-sample.yaml](/examples/ihpa/dynamic-reactive-portrait-sample.yaml) which looks like this:
 
 ```yaml
 apiVersion: autoscaling.kapacitystack.io/v1alpha1
 kind: IntelligentHorizontalPodAutoscaler
 metadata:
-  name: dynamic-portrait-reactive-sample
+  name: dynamic-reactive-portrait-sample
 spec:
-  paused: false
-  minReplicas: 0
+  minReplicas: 1
   maxReplicas: 10
   portraitProviders:
-    - type: Dynamic
-      priority: 0
-      dynamic:
-        portraitType: Reactive
-        metrics:
-          - name: metrics-scale-out
-            type: Resource
-            resource:
-              name: cpu
-              target:
-                type: Utilization
-                averageUtilization: 30
-        algorithm:
-          type: KubeHPA
+  - type: Dynamic
+    priority: 1
+    dynamic:
+      portraitType: Reactive
+      metrics:
+      - type: Resource
+        resource:
+          name: cpu
+          target:
+            type: Utilization
+            averageUtilization: 30
+      algorithm:
+        type: KubeHPA
   scaleTargetRef:
     kind: StatefulSet
     name: nginx
     apiVersion: apps/v1
 ```
 
-Execute command to create IHPA CR
+Run following command to create the IHPA:
 
-```bash
-kubectl apply -f dynamic-portrait-reactive-sample.yaml
+```shell
+kubectl apply -f dynamic-reactive-portrait-sample.yaml
 ```
 
-Check if the IHPA CR is successfully created
+## Increase the load
 
-```bash
-kubectl get ihpa
+Run following command to get the ClusterIP and port of the NGINX service：
 
-NAME                               AGE
-dynamic-portrait-reactive-sample   29m
+```shell
+kubectl get svc nginx
 ```
 
-### 3.Pressure Test
-
-Obtain the port number exposed by the Nginx service (32591 in the example)
-
-```bash
-kubectl get service nginx
-
-NAME         TYPE       CLUSTER-IP     EXTERNAL-IP   PORT(S)         AGE
-nginx        NodePort   10.111.21.74   <none>        80:32591/TCP    13m
+```
+NAME         TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)    AGE
+nginx        ClusterIP   10.111.21.74   <none>        80/TCP     13m
 ```
 
-Use a pressure test tool or a pressure test script to perform a pressure test on the service, such as the Apache
-Benchmark (ab) for stress testing. Note that the ip and port in the url are replaced with your own.
+Start a different pod to act as a client which will send requests to the NGINX service infinitely with the service ip and port replaced by the value got in previous step:
 
-```bash
-ab -n 10000 -c 100 http://<your-node-ip>:<your-port>/index
+```shell
+# Run this in a separate terminal so that the load generation continues and you can carry on with the rest of the steps
+kubectl run -i --tty load-generator --rm --image=busybox:1.28 --restart=Never -- /bin/sh -c "while sleep 0.01; do wget -q -O- http://<service-ip>:<service-port>; done"
 ```
 
-### 4.Validation Results
+After several minutes, you can see that the workload is scaled up by checking events of the IHPA:
 
-After waiting for 3-10 minutes, you can see the specific elastic results through IHPA Events
+```shell
+kubectl describe ihpa dynamic-reactive-portrait-sample
+```
 
-```bash
-kubectl describe ihpa dynamic-portrait-reactive-sample
-
+```
+...
 Events:
-  Type     Reason                             Age                From             Message
-  ----     ------                             ----               ----             -------
-  Warning  FailedUpdateAndFetchPortraitValue  27m                ihpa_controller  failed to update and fetch portrait value: failed to fetch portrait value: failed to get HorizontalPortrait "default/dynamic-portrait-reactive-sample-reactive": HorizontalPortrait.autoscaling.kapacity.traas.io "dynamic-portrait-reactive-sample-reactive" not found
-  Warning  NoValidPortraitValue               10m (x9 over 27m)  ihpa_controller  no valid portrait value for now
-  Normal   CreateReplicaProfile               9m58s              ihpa_controller  create ReplicaProfile with onlineReplcas: 1, cutoffReplicas: 0, standbyReplicas: 0
-  Normal   UpdateReplicaProfile               6m45s              ihpa_controller  update ReplicaProfile with onlineReplcas: 1 -> 6, cutoffReplicas: 0 -> 0, standbyReplicas: 0 -> 0
-  Normal   UpdateReplicaProfile               3m15s              ihpa_controller  update ReplicaProfile with onlineReplcas: 6 -> 4, cutoffReplicas: 0 -> 0, standbyReplicas: 0 -> 0
-  Normal   UpdateReplicaProfile               2m45s              ihpa_controller  update ReplicaProfile with onlineReplcas: 4 -> 1, cutoffReplicas: 0 -> 0, standbyReplicas: 0 -> 0
+  Type    Reason                Age    From             Message
+  ----    ------                ----   ----             -------
+  Normal  CreateReplicaProfile  6m58s  ihpa_controller  create ReplicaProfile with onlineReplcas: 1, cutoffReplicas: 0, standbyReplicas: 0
+  Normal  UpdateReplicaProfile  3m45s  ihpa_controller  update ReplicaProfile with onlineReplcas: 1 -> 6, cutoffReplicas: 0 -> 0, standbyReplicas: 0 -> 0
 ```
 
-## Clean-Up
+## Stop generating load
 
-You can clean up sample-related resources by executing the following command
+In the terminal where you created the Pod that runs a `busybox` image, terminate the load generation by typing `<Ctrl> + C`.
 
-```bash
-kubectl delete -f dynamic-portrait-reactive-sample.yaml 
+After several minutes, you can see that the workload is scaled down by checking events of the IHPA:
+
+```shell
+kubectl describe ihpa dynamic-reactive-portrait-sample
+```
+
+```
+...
+Events:
+  Type    Reason                Age    From             Message
+  ----    ------                ----   ----             -------
+  Normal  CreateReplicaProfile  9m58s  ihpa_controller  create ReplicaProfile with onlineReplcas: 1, cutoffReplicas: 0, standbyReplicas: 0
+  Normal  UpdateReplicaProfile  6m45s  ihpa_controller  update ReplicaProfile with onlineReplcas: 1 -> 6, cutoffReplicas: 0 -> 0, standbyReplicas: 0 -> 0
+  Normal  UpdateReplicaProfile  3m15s  ihpa_controller  update ReplicaProfile with onlineReplcas: 6 -> 4, cutoffReplicas: 0 -> 0, standbyReplicas: 0 -> 0
+  Normal  UpdateReplicaProfile  2m45s  ihpa_controller  update ReplicaProfile with onlineReplcas: 4 -> 1, cutoffReplicas: 0 -> 0, standbyReplicas: 0 -> 0
+```
+
+## Cleanup
+
+Run following command to cleanup all the resources:
+
+```shell
+kubectl delete -f dynamic-reactive-portrait-sample.yaml 
 kubectl delete -f nginx-statefulset.yaml 
 ```
