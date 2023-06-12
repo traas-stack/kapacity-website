@@ -1,0 +1,25 @@
+apiVersion: autoscaling.kapacitystack.io/v1alpha1
+kind: IntelligentHorizontalPodAutoscaler
+metadata:
+  name: dynamic-reactive-portrait-sample
+spec:
+  minReplicas: 1
+  maxReplicas: 10
+  portraitProviders:
+  - type: Dynamic
+    priority: 1
+    dynamic:
+      portraitType: Reactive
+      metrics:
+      - type: Resource
+        resource:
+          name: cpu
+          target:
+            type: Utilization
+            averageUtilization: 30
+      algorithm:
+        type: KubeHPA
+  scaleTargetRef:
+    kind: StatefulSet
+    name: nginx
+    apiVersion: apps/v1

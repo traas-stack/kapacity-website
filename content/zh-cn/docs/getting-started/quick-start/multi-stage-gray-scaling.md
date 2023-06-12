@@ -1,45 +1,35 @@
 ---
 title: "使用多阶段灰度扩缩容"
-linkTitle: "使用多阶段灰度扩缩容"
-description: "使用多阶段灰度扩缩容示例"
 weight: 17
 
 ---
 
-## 前置环境准备
+## 准备开始
 
-- Kubernetes cluster
-- Kapacity installed on the cluster
+你需要拥有一个安装了 Kapacity 的 Kubernetes 集群。
 
-## 安装步骤
+## 运行示例工作负载
 
-### 1.部署测试服务
+下载 [nginx-statefulset.yaml](/examples/workload/nginx-statefulset.yaml) 文件，并执行以下命令以运行一个 NGINX 服务：
 
-下载 [nginx-statefulset.yaml](/examples/nginx-statefulset.yaml) 文件，并执行以下命令可以快速部署一个 Nginx 服务。
-您也可以部署自己的服务，只需要在后边部署 IHPA yaml 时修改下 ***scaleTargetRef*** 的内容。
-
-```bash
-cd <your-file-directory>
+```shell
 kubectl apply -f nginx-statefulset.yaml
 ```
 
-验证服务部署完成
+验证服务部署完成：
 
-```bash
+```shell
 kubectl get po
+```
 
+```
 NAME      READY   STATUS    RESTARTS   AGE
 nginx-0   1/1     Running   0          5s
 ```
 
-### 2.使用多阶段灰度扩缩容
+## 创建配置了多阶段灰度缩容的 IHPA
 
-下载或复制以下配置到 [gray-strategy-sample.yaml](/examples/ihpa/gray-strategy-sample.yaml) 文件。该配置里包含2个画像：
-
-- 静态画像：
-    - 优先级为1，副本数为1
-- 定时画像
-    - 优先级为2，副本数为5，每个小时第0分钟到第10分钟生效
+下载 [gray-strategy-sample.yaml](/examples/ihpa/gray-strategy-sample.yaml) 文件，其内容如下所示：
 
 ```yaml
 apiVersion: autoscaling.kapacitystack.io/v1alpha1
@@ -47,47 +37,56 @@ kind: IntelligentHorizontalPodAutoscaler
 metadata:
   name: gray-strategy-sample
 spec:
-  paused: false
-  minReplicas: 0
+  minReplicas: 1
   maxReplicas: 10
   portraitProviders:
-    - priority: 1
-      static:
-        replicas: 1
-      type: Static
-    - cron:
-        crons:
-          - end: 10 * * * *
-            name: test
-            replicas: 5
-            start: 0 * * * *
-            timeZone: Asia/Shanghai
-      priority: 2
-      type: Cron
+  - priority: 1
+    static:
+      replicas: 1
+    type: Static
+  - cron:
+      crons:
+      - name: cron-1
+        replicas: 5
+        start: 0 * * * *
+        end: 10 * * * *
+    priority: 2
+    type: Cron
   behavior:
     scaleDown:
       grayStrategy:
-        grayState: Cutoff            #灰度变更中间状态
-        changeIntervalSeconds: 30    #每批次变更间隔时间，单位为秒
-        changePercent: 50            #每批次变更粒度，单位为百分比
-        observationSeconds: 60       #从中间状态变更到终态前的观察时间
+        grayState: Cutoff         # GrayState is the desired state of pods that in gray stage.
+        changeIntervalSeconds: 30 # ChangeIntervalSeconds is the interval time between each gray change.
+        changePercent: 50         # ChangePercent is the percentage of the total change of replica numbers which is used to calculate the amount of pods to change in each gray change.
+        observationSeconds: 60    # ObservationSeconds is the additional observation time after the gray change reaching 100%.
   scaleTargetRef:
     kind: StatefulSet
     name: nginx
     apiVersion: apps/v1
 ```
 
-执行以下命令，生成 IHPA CR
+该 IHPA 配置了以下两个画像源：
 
-```bash
+* 静态画像源：优先级为 1，副本数始终为 1。
+* 定时画像源：优先级为 2，每小时第 0 分钟到第 10 分钟的副本数为 5。
+
+由于定时画像源的优先级**高于**静态画像源，因此在其生效期间指定的副本数会覆盖静态画像源的副本数。
+
+执行以下命令创建该 IHPA：
+
+```shell
 kubectl apply -f gray-strategy-sample.yaml
 ```
 
-假如当前时间为第0-9分钟，可以看到定时画像生效(优先级高)，pod 数从1扩容到了5
+## 验证结果
 
-```bash
-kubectl get po -L 'kapacitystack.io/pod-state' -owide
+在任意小时的第 0~9 分钟，我们可以看到定时画像源生效，工作负载的副本数从 1 扩容到了 5：
 
+```shell
+kubectl get po -L 'kapacitystack.io/pod-state' -o wide
+```
+
+```
 NAME      READY   STATUS    RESTARTS   AGE   IP          NODE             NOMINATED NODE   READINESS GATES   POD-STATE
 nginx-0   1/1     Running   0          50m   10.1.5.52   docker-desktop   <none>           1/1
 nginx-1   1/1     Running   0          56s   10.1.5.68   docker-desktop   <none>           1/1
@@ -96,67 +95,84 @@ nginx-3   1/1     Running   0          52s   10.1.5.70   docker-desktop   <none>
 nginx-4   1/1     Running   0          50s   10.1.5.71   docker-desktop   <none>           1/1
 ```
 
-服务 EndPoint 数也变为5个
+该工作负载对应服务的 Endpoint 数量也变为 5 个：
 
-```bash
+```shell
 kubectl get ep nginx
+```
 
+```
 NAME    ENDPOINTS                                            AGE
 nginx   10.1.5.52:80,10.1.5.68:80,10.1.5.69:80 + 2 more...   3d3h
 ```
 
-第10分钟可以看到，2个 pod 变为了 Cutoff 状态，并且从服务的 EndPoint 列表里摘除
+在第 10 分钟我们可以看到多阶段灰度缩容开始，其中 2 个 Pod 变为了 Cutoff 状态，并且从服务的 Endpoint 中摘除：
 
-```bash
-kubectl get po -L 'kapacitystack.io/pod-state' -owide
+```shell
+kubectl get po -L 'kapacitystack.io/pod-state' -o wide
+```
 
+```
 NAME      READY   STATUS    RESTARTS   AGE   IP          NODE             NOMINATED NODE   READINESS GATES   POD-STATE
 nginx-0   1/1     Running   0          51m   10.1.5.52   docker-desktop   <none>           1/1
 nginx-1   1/1     Running   0          63s   10.1.5.68   docker-desktop   <none>           1/1
 nginx-2   1/1     Running   0          61s   10.1.5.69   docker-desktop   <none>           1/1
 nginx-3   1/1     Running   0          59s   10.1.5.70   docker-desktop   <none>           0/1               Cutoff
 nginx-4   1/1     Running   0          57s   10.1.5.71   docker-desktop   <none>           0/1               Cutoff
+```
 
-------
+```shell
 kubectl get ep nginx
+```
 
+```
 NAME    ENDPOINTS                                AGE
 nginx   10.1.5.52:80,10.1.5.68:80,10.1.5.69:80   3d3h
 ```
 
-再等待30s后，可以看到4个 pod 变为 Cutoff 状态，并且从服务的 EndPoint 列表里摘除
+再过 30 秒后，可以看到 4 个 Pod 变为了 Cutoff 状态，并且从服务的 Endpoint 中摘除：
 
-```bash
-kubectl get po -L 'kapacitystack.io/pod-state' -owide
+```shell
+kubectl get po -L 'kapacitystack.io/pod-state' -o wide
+```
 
+```
 NAME      READY   STATUS    RESTARTS   AGE   IP          NODE             NOMINATED NODE   READINESS GATES   POD-STATE
 nginx-0   1/1     Running   0          51m   10.1.5.52   docker-desktop   <none>           1/1
 nginx-1   1/1     Running   0          96s   10.1.5.68   docker-desktop   <none>           0/1               Cutoff
 nginx-2   1/1     Running   0          94s   10.1.5.69   docker-desktop   <none>           0/1               Cutoff
 nginx-3   1/1     Running   0          92s   10.1.5.70   docker-desktop   <none>           0/1               Cutoff
 nginx-4   1/1     Running   0          90s   10.1.5.71   docker-desktop   <none>           0/1               Cutoff
+```
 
-------
+```shell
 kubectl get ep nginx
+```
 
+```
 NAME    ENDPOINTS      AGE
 nginx   10.1.5.52:80   3d3h
 ```
 
-再观察1m后，可以看到 pod 被缩容到1个
+再过 1 分钟后，可以看到工作负载最终被缩容到 1 个 Pod：
 
-```bash
-kubectl get po -L 'kapacitystack.io/pod-state' -owide
+```shell
+kubectl get po -L 'kapacitystack.io/pod-state' -o wide
+```
 
+```
 NAME      READY   STATUS    RESTARTS   AGE    IP          NODE             NOMINATED NODE   READINESS GATES   POD-STATE
 nginx-0   1/1     Running   0          52m    10.1.5.52   docker-desktop   <none>           1/1
 ```
 
-您也可以通过 IHPA Events 看到缩容的整个流程
+你也可以通过 IHPA 的事件看到缩容的整个流程：
 
-```bash
+```shell
 kubectl describe ihpa gray-strategy-sample
+```
 
+```
+...
 Events:
   Type    Reason                Age    From             Message
   ----    ------                ----   ----             -------
@@ -171,7 +187,7 @@ Events:
 
 您可以通过执行以下命令清理样例相关资源
 
-```bash
+```shell
 kubectl delete -f gray-strategy-sample.yaml 
 kubectl delete -f nginx-statefulset.yaml 
 ```

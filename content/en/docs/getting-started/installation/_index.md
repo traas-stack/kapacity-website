@@ -5,99 +5,87 @@ weight: 12
 
 ---
 
-This document mainly introduces environment preparation and how to quickly install and deploy Kapacity.
+## Prerequisites
 
-## Pre-requisites
+* [Kubernetes](https://kubernetes.io/) 1.16+ (1.22+ recommended)
+* [Helm](https://helm.sh/) 3
 
-- Kubernetes 1.19+
-- Helm 3+
-- Cert-manager 1.11+
-- Prometheus
+## Install
 
-## Steps
+### Install cert-manager
 
-### Installing CertManager
+Install [cert-manager](https://cert-manager.io/) by Helm.
 
-Cert-Manager can be installed using helm
-
-```bash
+```shell
 helm repo add jetstack https://charts.jetstack.io
 helm repo update
 
 helm install \
   cert-manager jetstack/cert-manager \
   --namespace cert-manager \
-  --set installCRDs=true \
   --create-namespace \
-  --version v1.12.0 
+  --set installCRDs=true
 ```
 
-### Installing Prometheus
+### Install Prometheus
 
-Prometheus can be installed using helm
+Install [Prometheus](https://prometheus.io/) with [kube-state-metrics](https://github.com/kubernetes/kube-state-metrics) by Helm.
 
-```bash
+```shell
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update
 
-helm install prometheus  prometheus-community/prometheus -n prometheus  \
-   --create-namespace \
-   --set pushgateway.enabled=false \
-   --set alertmanager.enabled=false \
-   --set prometheus-node-exporter.hostRootFsMount.enabled=false
-```
-
-View the ClusterIp and Port of Prometheus Server
-
-```bash
-kubectl -nprometheus get svc
-
-NAME                                  TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
-prometheus-kube-state-metrics         ClusterIP   10.97.190.94     <none>        8080/TCP   2d2h
-prometheus-prometheus-node-exporter   ClusterIP   10.100.121.134   <none>        9100/TCP   2d2h
-prometheus-server                     ClusterIP   10.104.214.48    <none>        80/TCP     2d2h
-```
-
-### Installing Kapacity
-
-Install Kapacity using Helm
-
-- Add Helm repo
-
-```bash
-helm repo add kapacity https://traas-stack.github.io/kapacity-charts
-```
-
-- Update Helm repo
-
-```bash
-helm repo update
-```
-
-- Install Kapacity using Helm Charts
-
-When installing Kapacity, the prometheus-address parameter can be obtained through
-the [Install Prometheus](#installing-prometheus) step
-
-```bash
-helm install kapacity-manager kapacity -n kapacity-system \
+helm install \
+  prometheus prometheus-community/prometheus \
+  --namespace prometheus \
   --create-namespace \
-  --set prometheus.address=http://<prometheus-server-clusterip>:<port> 
+  --set alertmanager.enabled=false \
+  --set prometheus-node-exporter.enabled=false \
+  --set prometheus-pushgateway.enabled=false
 ```
 
-- Verify Kapacity installation results
+Run following command to view Prometheus Server's ClusterIP and port:
 
-```bash
+```shell
+kubectl get svc -n prometheus
+```
+
+```
+NAME                                  TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
+prometheus-kube-state-metrics         ClusterIP   10.97.190.94     <none>        8080/TCP   5m
+prometheus-server                     ClusterIP   10.104.214.48    <none>        80/TCP     5m
+```
+
+### Install Kapacity
+
+Install Kapacity by Helm. The Prometheus Server address params are those got in previous step.
+
+```shell
+helm repo add kapacity https://traas-stack.github.io/kapacity-charts
+helm repo update
+
+helm install \
+  kapacity-manager kapacity/kapacity-manager \
+  --namespace kapacity-system \
+  --create-namespace \
+  --set prometheus.address=http://<prometheus-server-clusterip>:<prometheus-server-port> 
+```
+
+### Verify Kapacity installation
+
+```shell
 kubectl get deploy -n kapacity-system
+```
 
-NAME                          READY   UP-TO-DATE   AVAILABLE   AGE
-kapacity-controller-manager   1/1     1            1           3d23h
+```
+NAME               READY   UP-TO-DATE   AVAILABLE   AGE
+kapacity-manager   1/1     1            1           5m
 ```
 
 ## Uninstall
 
-```bash
-helm uninstall kapacity -n kapacity-system
+```shell
+helm uninstall kapacity-manager -n kapacity-system
 helm uninstall prometheus -n prometheus
 helm uninstall cert-manager -n cert-manager
 ```

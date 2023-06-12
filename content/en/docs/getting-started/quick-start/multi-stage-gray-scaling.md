@@ -1,48 +1,35 @@
 ---
-title: "Gray Scaling"
-linkTitle: "Gray Scaling"
-description: "Gray Scaling"
+title: "Multi-Stage Gray Scaling"
 weight: 17
 
 ---
 
-## Pre-requisites
+## Before you begin
 
-- Kubernetes cluster
-- Kapacity installed on the cluster
+You need to have a Kubernetes cluster with Kapacity installed.
 
-## Steps
+## Run sample workload
 
-### 1.Deploying Test Service
+Download [nginx-statefulset.yaml](/examples/workload/nginx-statefulset.yaml) and run following command to run an NGINX workload.
 
-Download the [nginx-statefulset.yaml](/examples/nginx-statefulset.yaml) file and execute the following command to
-quickly deploy an Nginx service. You can also deploy your own service, just modify the content of ***scaleTargetRef***
-when deploying IHPA yaml later.
-
-```bash
-cd <your-file-directory>
+```shell
 kubectl apply -f nginx-statefulset.yaml
 ```
 
-Verify service deployment results
+Check if the workload is running:
 
-```bash
+```shell
 kubectl get po
+```
 
+```
 NAME      READY   STATUS    RESTARTS   AGE
 nginx-0   1/1     Running   0          5s
 ```
 
-### 2.Use Multi-Stage Gray Scaling
+## Create IHPA with gray scale down strategy
 
-Download or copy the following configuration to [gray-strategy-sample.yaml](/examples/ihpa/gray-strategy-sample.yaml)
-document. This configuration contains 2 portraits:
-
-- Static Portrait：
-    - The priority is 1 and the number of replicas 1
-- Cron Portrait
-    - The priority is 2, the number of replicas is 5, and it takes effect from the 0th minute to the 10th minute of each
-      hour
+Download [gray-strategy-sample.yaml](/examples/ihpa/gray-strategy-sample.yaml) which looks like this:
 
 ```yaml
 apiVersion: autoscaling.kapacitystack.io/v1alpha1
@@ -50,48 +37,56 @@ kind: IntelligentHorizontalPodAutoscaler
 metadata:
   name: gray-strategy-sample
 spec:
-  paused: false
-  minReplicas: 0
+  minReplicas: 1
   maxReplicas: 10
   portraitProviders:
-    - priority: 1
-      static:
-        replicas: 1
-      type: Static
-    - cron:
-        crons:
-          - end: 10 * * * *
-            name: test
-            replicas: 5
-            start: 0 * * * *
-            timeZone: Asia/Shanghai
-      priority: 2
-      type: Cron
+  - priority: 1
+    static:
+      replicas: 1
+    type: Static
+  - cron:
+      crons:
+      - name: cron-1
+        replicas: 5
+        start: 0 * * * *
+        end: 10 * * * *
+    priority: 2
+    type: Cron
   behavior:
     scaleDown:
       grayStrategy:
-        grayState: Cutoff
-        changeIntervalSeconds: 30
-        changePercent: 50
-        observationSeconds: 60
+        grayState: Cutoff         # GrayState is the desired state of pods that in gray stage.
+        changeIntervalSeconds: 30 # ChangeIntervalSeconds is the interval time between each gray change.
+        changePercent: 50         # ChangePercent is the percentage of the total change of replica numbers which is used to calculate the amount of pods to change in each gray change.
+        observationSeconds: 60    # ObservationSeconds is the additional observation time after the gray change reaching 100%.
   scaleTargetRef:
     kind: StatefulSet
     name: nginx
     apiVersion: apps/v1
 ```
 
-Execute the following command to generate IHPA CR
+This IHPA contains below two portrait providers:
 
-```bash
+* A static portrait provider with priority 1 and a static replica number 1.
+* A cron portrait provider with priority 2 and replica number 5 which takes effect the 0th minute to the 10th minute of every hour.
+
+Note that the cron portrait provider's priority is **higher** than the static one, so the replica number it provided would override the one provided by the static portrait provider when it is effective.
+
+Run following command to create the IHPA:
+
+```shell
 kubectl apply -f gray-strategy-sample.yaml
 ```
 
-If the current time is 0-9 minutes, you can see that the scheduled portrait takes effect (high priority), and the number
-of pods has expanded from 1 to 5
+## Verify results
 
-```bash
-kubectl get po -L 'kapacitystack.io/pod-state' -owide
+We can see that the cron portrait provider is taking effect at 0~10th minute of every hour, and the replicas of the workload are scaled up from 1 to 5:
 
+```shell
+kubectl get po -L 'kapacitystack.io/pod-state' -o wide
+```
+
+```
 NAME      READY   STATUS    RESTARTS   AGE   IP          NODE             NOMINATED NODE   READINESS GATES   POD-STATE
 nginx-0   1/1     Running   0          50m   10.1.5.52   docker-desktop   <none>           1/1
 nginx-1   1/1     Running   0          56s   10.1.5.68   docker-desktop   <none>           1/1
@@ -100,69 +95,84 @@ nginx-3   1/1     Running   0          52s   10.1.5.70   docker-desktop   <none>
 nginx-4   1/1     Running   0          50s   10.1.5.71   docker-desktop   <none>           1/1
 ```
 
-The number of service EndPoints is also changed to 5
+The number of endpoints of the service of the workload is also changed to 5:
 
-```bash
+```shell
 kubectl get ep nginx
+```
 
+```
 NAME    ENDPOINTS                                            AGE
 nginx   10.1.5.52:80,10.1.5.68:80,10.1.5.69:80 + 2 more...   3d3h
 ```
 
-In the 10th minute, you can see that both pods have become Cutoff and have been removed from the EndPoint list of the
-service
+At the 10th minute, we can see that 2 pods change to Cutoff state and are removed from the endpoints of the service:
 
-```bash
-kubectl get po -L 'kapacitystack.io/pod-state' -owide
+```shell
+kubectl get po -L 'kapacitystack.io/pod-state' -o wide
+```
 
+```
 NAME      READY   STATUS    RESTARTS   AGE   IP          NODE             NOMINATED NODE   READINESS GATES   POD-STATE
 nginx-0   1/1     Running   0          51m   10.1.5.52   docker-desktop   <none>           1/1
 nginx-1   1/1     Running   0          63s   10.1.5.68   docker-desktop   <none>           1/1
 nginx-2   1/1     Running   0          61s   10.1.5.69   docker-desktop   <none>           1/1
 nginx-3   1/1     Running   0          59s   10.1.5.70   docker-desktop   <none>           0/1               Cutoff
 nginx-4   1/1     Running   0          57s   10.1.5.71   docker-desktop   <none>           0/1               Cutoff
+```
 
-------
+```shell
 kubectl get ep nginx
+```
 
+```
 NAME    ENDPOINTS                                AGE
 nginx   10.1.5.52:80,10.1.5.68:80,10.1.5.69:80   3d3h
 ```
 
-After waiting for another 30 seconds, you can see that the 4 pods have changed to the Cutoff state and have been removed
-from the EndPoint list of the service.
+After waiting for another 30 seconds, we can see that the 4 pods change to Cutoff state and are removed from the endpoints of the service:
 
-```bash
-kubectl get po -L 'kapacitystack.io/pod-state' -owide
+```shell
+kubectl get po -L 'kapacitystack.io/pod-state' -o wide
+```
 
+```
 NAME      READY   STATUS    RESTARTS   AGE   IP          NODE             NOMINATED NODE   READINESS GATES   POD-STATE
 nginx-0   1/1     Running   0          51m   10.1.5.52   docker-desktop   <none>           1/1
 nginx-1   1/1     Running   0          96s   10.1.5.68   docker-desktop   <none>           0/1               Cutoff
 nginx-2   1/1     Running   0          94s   10.1.5.69   docker-desktop   <none>           0/1               Cutoff
 nginx-3   1/1     Running   0          92s   10.1.5.70   docker-desktop   <none>           0/1               Cutoff
 nginx-4   1/1     Running   0          90s   10.1.5.71   docker-desktop   <none>           0/1               Cutoff
+```
 
-------
+```shell
 kubectl get ep nginx
+```
 
+```
 NAME    ENDPOINTS      AGE
 nginx   10.1.5.52:80   3d3h
 ```
 
-After observing another 1m, you can see that the pod has been scaled down to 1
+After waiting for another 1 minute, we can see that the replicas of the workload are finally scaled down to 1:
 
-```bash
-kubectl get po -L 'kapacitystack.io/pod-state' -owide
+```shell
+kubectl get po -L 'kapacitystack.io/pod-state' -o wide
+```
 
+```
 NAME      READY   STATUS    RESTARTS   AGE    IP          NODE             NOMINATED NODE   READINESS GATES   POD-STATE
 nginx-0   1/1     Running   0          52m    10.1.5.52   docker-desktop   <none>           1/1
 ```
 
-You can also see the entire process of downsizing through IHPA Events
+You can also see the entire process of scaling by checking events of the IHPA:
 
-```bash
+```shell
 kubectl describe ihpa gray-strategy-sample
+```
 
+```
+...
 Events:
   Type    Reason                Age    From             Message
   ----    ------                ----   ----             -------
@@ -173,11 +183,11 @@ Events:
   Normal  UpdateReplicaProfile  14s    ihpa_controller  update ReplicaProfile with onlineReplcas: 1 -> 1, cutoffReplicas: 4 -> 0, standbyReplicas: 0 -> 0
 ```
 
-## Clean-Up
+## Cleanup
 
-You can clean up the sample related resources by executing the following command
+Run following command to cleanup all the resources:
 
-```bash
+```shell
 kubectl delete -f gray-strategy-sample.yaml 
 kubectl delete -f nginx-statefulset.yaml 
 ```

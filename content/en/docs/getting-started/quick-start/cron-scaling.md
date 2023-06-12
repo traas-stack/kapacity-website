@@ -1,44 +1,35 @@
 ---
 title: "Cron Scaling"
-linkTitle: "Cron Scaling"
-description: "Cron Scaling"
 weight: 15
 
 ---
 
-## Pre-requisites
+## Before you begin
 
-- Kubernetes cluster
-- Kapacity installed on the cluster
+You need to have a Kubernetes cluster with Kapacity installed.
 
-## Steps
+## Run sample workload
 
-### 1.Deploying Test Service
+Download [nginx-statefulset.yaml](/examples/workload/nginx-statefulset.yaml) and run following command to run an NGINX workload.
 
-Download the [nginx-statefulset.yaml](/examples/nginx-statefulset.yaml) file and execute the following command to
-quickly deploy an Nginx service. You can also deploy your own service, just modify the content of ***scaleTargetRef***
-when deploying IHPA yaml later.
-
-```bash
-cd <your-file-directory>
+```shell
 kubectl apply -f nginx-statefulset.yaml
 ```
 
-Verify service deployment results
+Check if the workload is running:
 
-```bash
+```shell
 kubectl get po
+```
 
+```
 NAME      READY   STATUS    RESTARTS   AGE
 nginx-0   1/1     Running   0          5s
 ```
 
-### 2.Scaling with Cron Portraits
+## Create IHPA with cron portrait provider
 
-Download or copy the following configuration
-to [cron-portrait-sample.yaml](/examples/ihpa/cron-portrait-sample.yaml)
-file. If you use other services, please modify the ***portraitProviders*** field and ***scaleTargetRef*** field in the
-Yaml file as required.
+Download [cron-portrait-sample.yaml](/examples/ihpa/cron-portrait-sample.yaml) which looks like this:
 
 ```yaml
 apiVersion: autoscaling.kapacitystack.io/v1alpha1
@@ -46,62 +37,54 @@ kind: IntelligentHorizontalPodAutoscaler
 metadata:
   name: cron-portrait-sample
 spec:
-  paused: false
-  minReplicas: 0
+  minReplicas: 1
   maxReplicas: 10
   portraitProviders:
-    - type: Cron
-      priority: 0
-      cron:
-        crons:
-          - name: "cron-1"
-            start: "0 * * * *"
-            end: "10 * * * *"
-            replicas: 1
-          - name: "cron-2"
-            start: "10 * * * *"
-            end: "20 * * * *"
-            replicas: 2
-          - name: "cron-3"
-            start: "20 * * * *"
-            end: "30 * * * *"
-            replicas: 3
-          - name: "cron-4"
-            start: "30 * * * *"
-            end: "40 * * * *"
-            replicas: 4
-          - name: "cron-5"
-            start: "40 * * * *"
-            end: "50 * * * *"
-            replicas: 5
+  - type: Cron
+    priority: 1
+    cron:
+      crons:
+      - name: cron-1
+        start: 0 * * * *
+        end: 10 * * * *
+        replicas: 1
+      - name: cron-2
+        start: 10 * * * *
+        end: 20 * * * *
+        replicas: 2
+      - name: cron-3
+        start: 20 * * * *
+        end: 30 * * * *
+        replicas: 3
+      - name: cron-4
+        start: 30 * * * *
+        end: 40 * * * *
+        replicas: 4
+      - name: cron-5
+        start: 40 * * * *
+        end: 50 * * * *
+        replicas: 5
   scaleTargetRef:
     kind: StatefulSet
     name: nginx
     apiVersion: apps/v1
 ```
 
-Execute command to create IHPA CR
+Run following command to create the IHPA:
 
-```bash
+```shell
 kubectl apply -f cron-portrait-sample.yaml
 ```
 
-View IHPA CR Creation Results
+## Verify results
 
-```bash
-kubectl get ihpa
+You can see that the replica number of the workload is changing dynamically accroding to our configration by checking the events of the IHPA:
 
-NAME                   AGE
-cron-portrait-sample   13s
+```shell
+kubectl describe ihpa cron-portrait-sample
 ```
 
-### 3.Validation Results
-
-By looking at IHPA's events you can see the following results:
-
-```bash
-kubectl describe ihpa cron-portrait-sample
-
+```
 ...
 Events:
   Type     Reason                Age                From             Message
@@ -113,13 +96,17 @@ Events:
   Normal   UpdateReplicaProfile  3m15s              ihpa_controller  update ReplicaProfile with onlineReplcas: 5 -> 1, cutoffReplicas: 0 -> 0, standbyReplicas: 0 -> 0
 ```
 
-## Clean-Up
+You can also verify it by directly watching the replica number of the workload.
 
-You can execute the following command to clean up related resources
+{{% alert title="Note" %}}
+You can see a `NoValidPortraitValue` event because the cron expressions configured do not cover this period of time, and the replica number of the workload will remain unchanged at this time.
+{{% /alert %}}
 
-```bash
+## Cleanup
+
+Run following command to cleanup all the resources:
+
+```shell
 kubectl delete -f cron-portrait-sample.yaml 
 kubectl delete -f nginx-statefulset.yaml 
 ```
-
-If you use your own service, please clean up separately

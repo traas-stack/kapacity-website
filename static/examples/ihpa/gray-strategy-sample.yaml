@@ -1,32 +1,30 @@
 apiVersion: autoscaling.kapacitystack.io/v1alpha1
 kind: IntelligentHorizontalPodAutoscaler
 metadata:
-  name: static-portrait-sample
+  name: gray-strategy-sample
 spec:
-  paused: false
-  minReplicas: 0
+  minReplicas: 1
   maxReplicas: 10
   portraitProviders:
-    - type: Static
-      priority: 1
-      static:
-        replicas: 1
-    - type: Cron
-      priority: 2
-      cron:
-        crons:
-        - start: 47 * * * *
-          end: 48 * * * *
-          name: test
-          replicas: 5
-          timeZone: Asia/Shanghai
+  - priority: 1
+    static:
+      replicas: 1
+    type: Static
+  - cron:
+      crons:
+      - name: cron-1
+        replicas: 5
+        start: 0 * * * *
+        end: 10 * * * *
+    priority: 2
+    type: Cron
   behavior:
     scaleDown:
       grayStrategy:
-        grayState: Cutoff
-        changeIntervalSeconds: 30
-        changePercent: 50
-        observationSeconds: 60
+        grayState: Cutoff         # GrayState is the desired state of pods that in gray stage.
+        changeIntervalSeconds: 30 # ChangeIntervalSeconds is the interval time between each gray change.
+        changePercent: 50         # ChangePercent is the percentage of the total change of replica numbers which is used to calculate the amount of pods to change in each gray change.
+        observationSeconds: 60    # ObservationSeconds is the additional observation time after the gray change reaching 100%.
   scaleTargetRef:
     kind: StatefulSet
     name: nginx
