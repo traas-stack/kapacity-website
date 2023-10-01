@@ -11,10 +11,10 @@ description: >
 
 贡献代码其实并不是唯一做出您的贡献的方式，我们也非常欢迎许多其他形式的贡献，例如：
 
-* 在 [GitHub Discussions](https://github.com/traas-stack/kapacity/discussions) 中回答问题
-* 在 [GitHub Issues](https://github.com/traas-stack/kapacity/issues) 中提交错误报告或新功能请求
-* Review [GitHub Pull Requests](https://github.com/traas-stack/kapacity/pulls) 中的他人代码
-* 为 [文档](https://github.com/traas-stack/kapacity-website) 做出贡献
+- 在 [GitHub Discussions](https://github.com/traas-stack/kapacity/discussions) 中回答问题
+- 在 [GitHub Issues](https://github.com/traas-stack/kapacity/issues) 中提交错误报告或新功能请求
+- Review [GitHub Pull Requests](https://github.com/traas-stack/kapacity/pulls) 中的他人代码
+- 为 [文档](https://github.com/traas-stack/kapacity-website) 做出贡献
 
 以下是一些具体的贡献指南。
 

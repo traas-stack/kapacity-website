@@ -67,8 +67,8 @@ spec:
 
 This IHPA contains below two portrait providers:
 
-* A static portrait provider with priority 1 and a static replica number 1.
-* A cron portrait provider with priority 2 and replica number 5 which takes effect the 0th minute to the 10th minute of every hour.
+- A static portrait provider with priority 1 and a static replica number 1.
+- A cron portrait provider with priority 2 and replica number 5 which takes effect the 0th minute to the 10th minute of every hour.
 
 Note that the cron portrait provider's priority is **higher** than the static one, so the replica number it provided would override the one provided by the static portrait provider when it is effective.
 

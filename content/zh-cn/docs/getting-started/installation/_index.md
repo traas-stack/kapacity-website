@@ -7,8 +7,8 @@ weight: 12
 
 ## 环境准备
 
-* [Kubernetes](https://kubernetes.io/zh-cn/) 1.16+ (1.22+ recommended)
-* [Helm](https://helm.sh/zh/) 3
+- [Kubernetes](https://kubernetes.io/zh-cn/) 1.16+ (1.22+ recommended)
+- [Helm](https://helm.sh/zh/) 3
 
 ## 安装流程
 

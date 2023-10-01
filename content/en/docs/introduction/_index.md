@@ -18,10 +18,10 @@ Kapacity is built upon core ideas and years of experience of the large-scale pro
 
 [Kubernetes HPA](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/) is a common way used to scale cloud native workloads automatically, but it has some BIG limitations listed below which make it less effective and practical in real world large-scale production use:
 
-* HPA works in a reactive way, which means it would only work AFTER the target metrics exceeding the expected value. It can hardly provide rapid and graceful response to traffic peaks, especially for applications with longer startup times.
-* HPA calculates replica count based on metrics by a simple ratio algorithm, with an assumption that the replica count must have a strict linear correlation with related metrics. However, this is not always the case in real world.
-* Scaling is a highly risky operation in production, but HPA provides little risk mitigation means other than scaling rate control.
-* HPA is a Kubernetes built-in, well, this is not a limitation literally, but it does limit some functions/behaviors to specific Kubernetes versions, and there is no way for end users to extend or adjust its functionality for their own needs.
+- HPA works in a reactive way, which means it would only work AFTER the target metrics exceeding the expected value. It can hardly provide rapid and graceful response to traffic peaks, especially for applications with longer startup times.
+- HPA calculates replica count based on metrics by a simple ratio algorithm, with an assumption that the replica count must have a strict linear correlation with related metrics. However, this is not always the case in real world.
+- Scaling is a highly risky operation in production, but HPA provides little risk mitigation means other than scaling rate control.
+- HPA is a Kubernetes built-in, well, this is not a limitation literally, but it does limit some functions/behaviors to specific Kubernetes versions, and there is no way for end users to extend or adjust its functionality for their own needs.
 
 So we build Intelligent HPA (IHPA), an intelligent, risk-defensive, highly adaptive and customizable substitution for HPA. It has following core features:
 
@@ -46,10 +46,10 @@ Unlike Kubernetes HPA which only supports simply scaling workloads up and down, 
 
 Kapacity defines the following Pod states currently:
 
-* Online: The Pod is serving traffics normally (Running and Ready). It is also the default state of every newly created Pod.
-* Cutoff: The Pod is running but not serving traffics (Running but Not Ready). In practice, IHPA supports scaling down Pod to this state with additional stability observation time, and once a risk is detected, the Pod can be rolled back to the Online state in seconds.
-* Standby: The Pod's resources are swapped out and kept at a low usage level. Compared with the Cutoff state, this state can actually release the resources of the Pod for reuse, and also supports rolling back to the Online state in minutes.
-* Deleted: The Pod has been deleted. In fact, the Pod itself would not exist in this state.
+- Online: The Pod is serving traffics normally (Running and Ready). It is also the default state of every newly created Pod.
+- Cutoff: The Pod is running but not serving traffics (Running but Not Ready). In practice, IHPA supports scaling down Pod to this state with additional stability observation time, and once a risk is detected, the Pod can be rolled back to the Online state in seconds.
+- Standby: The Pod's resources are swapped out and kept at a low usage level. Compared with the Cutoff state, this state can actually release the resources of the Pod for reuse, and also supports rolling back to the Online state in minutes.
+- Deleted: The Pod has been deleted. In fact, the Pod itself would not exist in this state.
   
 <img src="/images/en/state-change.png" width="500"/>
 
@@ -73,5 +73,5 @@ Sometimes it is not easy to detect risks only by monitoring the metrics used for
 
 Kapacity is born to be an open project which is easy to integrate or extend. For IHPA as an example:
 
-* IHPA is split into three independent modules for replica count calculation, workload replicas control and overall autoscaling process management. Each module is replaceable and extensible.
-* Various extension points are exposed which makes the behavior of IHPA fully customizable and extensible. For example, you can customize how to control traffics of the pod, which pods shall be scaled down first, how to detect risks during autoscaling and so on.
+- IHPA is split into three independent modules for replica count calculation, workload replicas control and overall autoscaling process management. Each module is replaceable and extensible.
+- Various extension points are exposed which makes the behavior of IHPA fully customizable and extensible. For example, you can customize how to control traffics of the pod, which pods shall be scaled down first, how to detect risks during autoscaling and so on.
