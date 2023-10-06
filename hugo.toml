@@ -204,6 +204,23 @@ enable = true
   icon = "fa fa-comments"
   desc = "Chat with other developers (mainly in Chinese). Group Number: 27855025593"
 
+[params.katex]
+# enable/disable KaTeX support
+enable = true
+# This is a list of delimiters to look for math, processed in the same order as
+# the list. Each delimiter has three properties:
+#   left:    A string which starts the math expression (i.e. the left delimiter).
+#   right:   A string which ends the math expression (i.e. the right delimiter).
+#   display: Whether math in the expression should be rendered in display mode.
+[[params.katex.options.delimiters]]
+  left = "$$"
+  right = "$$"
+  display = true
+[[params.katex.options.delimiters]]
+  left = "$"
+  right = "$"
+  display = false
+
 # hugo module configuration
 
 [module]
