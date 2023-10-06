@@ -35,8 +35,8 @@ Taking the predictive algorithm as an example, in real world production, the res
 
 To solve this problem, IHPA introduces a set of predictive algorithms based on machine learning that Ant Group has adopt to its internal large-scale production workloads. It first does time series prediction (making use of Swish Net for Time Series Forecasting, which is optimized for traffic forcasting) for each application traffic, and then uses the Linear-Residual Model to build a comprehensive relationship between traffics, resource utilization and replicas, and finally makes use of the relationship and traffic predictions to infer the recommended future replicas for the application.
 
-<img src="/images/en/prediction-algorithm.png" width="450"/>
-<img src="/images/en/replicas-calc-algorithm.png" width="350"/>
+<img src="/images/en/swish-net-tsf-model.png" width="350"/>
+<img src="/images/en/linear-residual-model.png" width="500"/>
 
 Through the core "traffic-driven" idea, this algorithm is suitable for a variety of complex scenarios in real-world production such as multi period and trending traffic, load affected by multiple traffics, non-linear correlation between load and replica count, and so on.
 

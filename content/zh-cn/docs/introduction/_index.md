@@ -33,8 +33,8 @@ Kapacity 基于蚂蚁集团内部容量系统的核心理念和多年的大规�
 
 为此，IHPA 引入了蚂蚁在内部大规模弹性生产实践中打磨出的一套基于机器学习的预测式算法，该算法首先通过针对流量时序做过优化的 Swish Net for Time Series Forecasting (SNTSF) 对潜在影响应用容量水位的多条流量进行时序预测，随后通过 Linear-Residual Model 将这些组分流量和应用容量及其对应副本数进行综合建模，最终推理得出应用未来的推荐副本数。
 
-<img src="/images/zh-cn/prediction-algorithm.png" width="450"/>
-<img src="/images/zh-cn/replicas-calc-algorithm.png" width="350"/>
+<img src="/images/en/swish-net-tsf-model.png" width="350"/>
+<img src="/images/en/linear-residual-model.png" width="500"/>
 
 通过这种流量驱动容量的思想，该算法能够很好地应对生产上多周期流量、趋势变化流量、多条流量共同影响容量、容量与副本数呈非线性关系等复杂场景，通用性和准确性兼具。
 
@@ -61,7 +61,7 @@ IHPA 在执行扩缩容时支持采用自定义灰度分批的变更策略，最
 
 下面以使用 Cutoff 作为中间态的一次灰度缩容为例：某应用的工作负载原来有 6 个 Pod，期望缩容到 2 个，此时会按照用户的灰度配置自动分批变更 Pod 为 Cutoff 状态，每次变更都会间隔一定时间进行稳定性观察。当待缩容 Pod 都切换为 Cutoff 状态后会进入最终的额外稳定性观察期，如果最后没有发现风险则再执行真正的缩容，如果期间发现风险，则能够快速回滚到 Online 状态。
 
-<img src="/images/zh-cn/gray-scaling.png" width="800"/>
+<img src="/images/en/gray-scaling.png" width="800"/>
 
 ##### 稳定性检查与变更熔断
 
