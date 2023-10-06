@@ -1,6 +1,6 @@
 ---
 title: "Multi-Stage Gray Scaling"
-weight: 17
+weight: 3
 
 ---
 

@@ -1,6 +1,6 @@
 ---
 title: "贡献指南"
-weight: 5
+weight: 4
 description: >
   了解如何贡献 Kapacity 项目
 ---

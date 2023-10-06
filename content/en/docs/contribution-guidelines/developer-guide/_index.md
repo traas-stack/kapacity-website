@@ -1,6 +1,6 @@
 ---
 title: "Developer Guide"
-weight: 7
+weight: 1
 description: >
   How to develop Kapacity
 ---

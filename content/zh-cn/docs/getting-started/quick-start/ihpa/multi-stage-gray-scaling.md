@@ -1,6 +1,6 @@
 ---
 title: "使用多阶段灰度扩缩容"
-weight: 17
+weight: 3
 
 ---
 
