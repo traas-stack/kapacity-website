@@ -1,22 +1,22 @@
 ---
-title: "Cron Scaling"
-weight: 15
+title: "使用定时扩缩容"
+weight: 1
 
 ---
 
-## Before you begin
+## 准备开始
 
-You need to have a Kubernetes cluster with Kapacity installed.
+你需要拥有一个安装了 Kapacity 的 Kubernetes 集群。
 
-## Run sample workload
+## 运行示例工作负载
 
-Download [nginx-statefulset.yaml](/examples/workload/nginx-statefulset.yaml) and run following command to run an NGINX workload.
+下载 [nginx-statefulset.yaml](/examples/workload/nginx-statefulset.yaml) 文件，并执行以下命令以运行一个 NGINX 服务：
 
 ```shell
 kubectl apply -f nginx-statefulset.yaml
 ```
 
-Check if the workload is running:
+验证服务部署完成：
 
 ```shell
 kubectl get po
@@ -27,9 +27,9 @@ NAME      READY   STATUS    RESTARTS   AGE
 nginx-0   1/1     Running   0          5s
 ```
 
-## Create IHPA with cron portrait provider
+## 创建配置了定时画像源的 IHPA
 
-Download [cron-portrait-sample.yaml](/examples/ihpa/cron-portrait-sample.yaml) which looks like this:
+下载 [cron-portrait-sample.yaml](/examples/ihpa/cron-portrait-sample.yaml) 文件，其内容如下所示：
 
 ```yaml
 apiVersion: autoscaling.kapacitystack.io/v1alpha1
@@ -70,15 +70,15 @@ spec:
     apiVersion: apps/v1
 ```
 
-Run following command to create the IHPA:
+执行以下命令创建该 IHPA：
 
 ```shell
 kubectl apply -f cron-portrait-sample.yaml
 ```
 
-## Verify results
+## 验证结果
 
-You can see that the replica number of the workload is changing dynamically accroding to our configration by checking the events of the IHPA:
+通过查看 IHPA 的事件可以看到工作负载的副本数正按我们的配置进行动态调整：
 
 ```shell
 kubectl describe ihpa cron-portrait-sample
@@ -96,15 +96,15 @@ Events:
   Normal   UpdateReplicaProfile  3m15s              ihpa_controller  update ReplicaProfile with onlineReplcas: 5 -> 1, cutoffReplicas: 0 -> 0, standbyReplicas: 0 -> 0
 ```
 
-You can also verify it by directly watching the replica number of the workload.
+你也可以通过直接观察工作负载的副本数变化来验证。
 
-{{% alert title="Note" %}}
-You can see a `NoValidPortraitValue` event because the cron expressions configured do not cover this period of time, and the replica number of the workload will remain unchanged at this time.
+{{% alert title="说明" %}}
+可以看到，由于上面的 cron 表达式没有覆盖所有时间段，因此在某段时间内出现了 `NoValidPortraitValue` 事件，此时工作负载的副本数将保持不变。
 {{% /alert %}}
 
-## Cleanup
+## 清理资源
 
-Run following command to cleanup all the resources:
+执行以下命令清理所有资源：
 
 ```shell
 kubectl delete -f cron-portrait-sample.yaml 

@@ -1,14 +1,14 @@
 ---
 title: "Installation"
 description: "How to install or uninstall Kapacity"
-weight: 12
+weight: 1
 
 ---
 
 ## Prerequisites
 
-* [Kubernetes](https://kubernetes.io/) 1.16+ (1.22+ recommended)
-* [Helm](https://helm.sh/) 3
+- [Kubernetes](https://kubernetes.io/) 1.16+ (1.22+ recommended)
+- [Helm](https://helm.sh/) 3
 
 ## Install
 

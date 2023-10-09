@@ -11,10 +11,10 @@ Thank you so much for helping Kapacity become better.
 
 Please note that contributing code is not the only way of contributing, there are many other forms of contributions that are also welcomed, such as:
 
-* Answering questions in [GitHub Discussions](https://github.com/traas-stack/kapacity/discussions)
-* Submitting bug report or feature request in [GitHub Issues](https://github.com/traas-stack/kapacity/issues)
-* Reviewing others code in [GitHub Pull Requests](https://github.com/traas-stack/kapacity/pulls)
-* Contributing to [documentations](https://github.com/traas-stack/kapacity-website)
+- Answering questions in [GitHub Discussions](https://github.com/traas-stack/kapacity/discussions)
+- Submitting bug report or feature request in [GitHub Issues](https://github.com/traas-stack/kapacity/issues)
+- Reviewing others code in [GitHub Pull Requests](https://github.com/traas-stack/kapacity/pulls)
+- Contributing to [documentations](https://github.com/traas-stack/kapacity-website)
 
 Here's the guideline for some contribution ways.
 

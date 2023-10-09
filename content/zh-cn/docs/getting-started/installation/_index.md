@@ -1,14 +1,14 @@
 ---
 title: "安装指南"
 description: "了解如何安装或卸载 Kapacity"
-weight: 12
+weight: 1
 
 ---
 
 ## 环境准备
 
-* [Kubernetes](https://kubernetes.io/zh-cn/) 1.16+ (1.22+ recommended)
-* [Helm](https://helm.sh/zh/) 3
+- [Kubernetes](https://kubernetes.io/zh-cn/) 1.16+ (1.22+ recommended)
+- [Helm](https://helm.sh/zh/) 3
 
 ## 安装流程
 

@@ -1,6 +1,6 @@
 ---
 title: "Quick Start"
-weight: 13
+weight: 2
 description: >
   Getting started to use Kapacity
 ---
