@@ -47,13 +47,12 @@ helm install \
 可以使用如下命令查看 Prometheus Server 的 ClusterIP 和端口：
 
 ```shell
-kubectl get svc -n prometheus
+kubectl get svc -n prometheus prometheus-server
 ```
 
 ```
-NAME                                  TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
-prometheus-kube-state-metrics         ClusterIP   10.97.190.94     <none>        8080/TCP   5m
-prometheus-server                     ClusterIP   10.104.214.48    <none>        80/TCP     5m
+NAME                TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE
+prometheus-server   ClusterIP   10.104.214.48   <none>        80/TCP    5m
 ```
 
 ### 安装 Kapacity

@@ -12,6 +12,8 @@ It automates your scaling, mitigates capacity risks, saves your effort as well a
 
 Kapacity is built upon core ideas and years of experience of the large-scale production capacity system at Ant Group, which saves ~100k cores yearly with high stability and zero downtime, combined with best practices from the cloud native community.
 
+<i class="fa-brands fa-youtube"></i> _Watch our talk (in Chinese) at KubeCon China 2023 "[How We Build Production-Grade HPA: From Effective Algorithm to Risk-Free Autoscaling](https://www.youtube.com/watch?v=9UqBSpmGzCs)" to learn the core idea and principles of Kapacity's Intelligent HPA in depth!_
+
 ## Core Features
 
 ### Intelligent HPA

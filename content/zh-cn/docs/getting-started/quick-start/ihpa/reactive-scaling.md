@@ -37,6 +37,10 @@ kind: IntelligentHorizontalPodAutoscaler
 metadata:
   name: dynamic-reactive-portrait-sample
 spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: nginx
   minReplicas: 1
   maxReplicas: 10
   portraitProviders:
@@ -53,10 +57,6 @@ spec:
             averageUtilization: 30
       algorithm:
         type: KubeHPA
-  scaleTargetRef:
-    kind: StatefulSet
-    name: nginx
-    apiVersion: apps/v1
 ```
 
 执行以下命令创建该 IHPA：
@@ -82,7 +82,7 @@ nginx        ClusterIP   10.111.21.74   <none>        80/TCP     13m
 
 ```shell
 # 在单独的终端中运行它以便负载生成继续，你可以继续执行其余步骤
-kubectl run -i --tty load-generator --rm --image=busybox:1.28 --restart=Never -- /bin/sh -c "while sleep 0.01; do wget -q -O- http://<service-ip>:<service-port>; done"
+kubectl run -i --tty load-generator --rm --image=busybox --restart=Never -- /bin/sh -c "while sleep 0.01; do wget -q -O- http://<service-ip>:<service-port> > /dev/null; done"
 ```
 
 等待几分钟后，可以通过 IHPA 的事件看到工作负载被扩容了：

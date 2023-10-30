@@ -10,7 +10,7 @@ You need to have a Kubernetes cluster with Kapacity installed.
 
 ## Run sample workload
 
-Download [nginx-statefulset.yaml](/examples/workload/nginx-statefulset.yaml) and run following command to run an NGINX workload.
+Download [nginx-statefulset.yaml](/examples/workload/nginx-statefulset.yaml) and run following command to run an NGINX workload:
 
 ```shell
 kubectl apply -f nginx-statefulset.yaml
@@ -37,6 +37,10 @@ kind: IntelligentHorizontalPodAutoscaler
 metadata:
   name: cron-portrait-sample
 spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: nginx
   minReplicas: 1
   maxReplicas: 10
   portraitProviders:
@@ -64,10 +68,6 @@ spec:
         start: 40 * * * *
         end: 50 * * * *
         replicas: 5
-  scaleTargetRef:
-    kind: StatefulSet
-    name: nginx
-    apiVersion: apps/v1
 ```
 
 Run following command to create the IHPA:

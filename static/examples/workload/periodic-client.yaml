@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: periodic-client
+  labels:
+    app: periodic-client
+spec:
+  containers:
+  - name: periodic-client
+    image: busybox
+    command:
+    - /bin/sh
+    - -c
+    - >- 
+      while true; do
+        m=$(expr `date +%M` - 30)
+        m=`expr 100 \* ${m#-} \+ 1`
+        st=$(printf "%.5f" `echo "scale=5;60/$m" | bc`)
+        for i in `seq 0 $m`; do
+          wget -q -O- http://nginx.example.com > /dev/null
+          sleep $st
+        done
+      done
+  hostAliases:
+  - ip: "<nginx-ingress-address>"
+    hostnames:
+    - nginx.example.com

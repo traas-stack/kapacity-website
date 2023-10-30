@@ -37,6 +37,10 @@ kind: IntelligentHorizontalPodAutoscaler
 metadata:
   name: gray-strategy-sample
 spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: nginx
   minReplicas: 1
   maxReplicas: 10
   portraitProviders:
@@ -59,10 +63,6 @@ spec:
         changeIntervalSeconds: 30 # ChangeIntervalSeconds is the interval time between each gray change.
         changePercent: 50         # ChangePercent is the percentage of the total change of replica numbers which is used to calculate the amount of pods to change in each gray change.
         observationSeconds: 60    # ObservationSeconds is the additional observation time after the gray change reaching 100%.
-  scaleTargetRef:
-    kind: StatefulSet
-    name: nginx
-    apiVersion: apps/v1
 ```
 
 该 IHPA 配置了以下两个画像源：

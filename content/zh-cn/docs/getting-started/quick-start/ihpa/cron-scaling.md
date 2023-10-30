@@ -37,6 +37,10 @@ kind: IntelligentHorizontalPodAutoscaler
 metadata:
   name: cron-portrait-sample
 spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: nginx
   minReplicas: 1
   maxReplicas: 10
   portraitProviders:
@@ -64,10 +68,6 @@ spec:
         start: 40 * * * *
         end: 50 * * * *
         replicas: 5
-  scaleTargetRef:
-    kind: StatefulSet
-    name: nginx
-    apiVersion: apps/v1
 ```
 
 执行以下命令创建该 IHPA：

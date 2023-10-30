@@ -10,7 +10,7 @@ You need to have a Kubernetes cluster with Kapacity installed.
 
 ## Run sample workload
 
-Download [nginx-statefulset.yaml](/examples/workload/nginx-statefulset.yaml) and run following command to run an NGINX workload.
+Download [nginx-statefulset.yaml](/examples/workload/nginx-statefulset.yaml) and run following command to run an NGINX workload:
 
 ```shell
 kubectl apply -f nginx-statefulset.yaml
@@ -37,6 +37,10 @@ kind: IntelligentHorizontalPodAutoscaler
 metadata:
   name: gray-strategy-sample
 spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: nginx
   minReplicas: 1
   maxReplicas: 10
   portraitProviders:
@@ -59,10 +63,6 @@ spec:
         changeIntervalSeconds: 30 # ChangeIntervalSeconds is the interval time between each gray change.
         changePercent: 50         # ChangePercent is the percentage of the total change of replica numbers which is used to calculate the amount of pods to change in each gray change.
         observationSeconds: 60    # ObservationSeconds is the additional observation time after the gray change reaching 100%.
-  scaleTargetRef:
-    kind: StatefulSet
-    name: nginx
-    apiVersion: apps/v1
 ```
 
 This IHPA contains below two portrait providers:

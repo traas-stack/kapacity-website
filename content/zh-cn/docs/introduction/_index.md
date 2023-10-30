@@ -10,6 +10,8 @@ Kapacity 旨在为用户提供一套具备完善技术风险能力的、智能�
 
 Kapacity 基于蚂蚁集团内部容量系统的核心理念和多年的大规模生产实践经验而构建，该内部容量系统目前已能安全稳定地为蚂蚁持续节省年均约 10w 核的算力成本，同时，Kapacity 也结合了来自云原生社区的最佳实践。
 
+<i class="fa-brands fa-youtube"></i> _观看我们在 KubeCon China 2023 上的中文演讲「[我们如何构建生产级 HPA：从智能算法到无风险自动扩缩容](https://mp.weixin.qq.com/s/TKWZhOZxAhB8HiwB2jAuvg)」来深入了解 Kapacity Intelligent HPA 的设计思想和实现原理！_
+
 ## 核心能力
 
 ### Intelligent HPA
