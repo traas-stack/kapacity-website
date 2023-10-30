@@ -1,14 +1,45 @@
 apiVersion: autoscaling.kapacitystack.io/v1alpha1
 kind: IntelligentHorizontalPodAutoscaler
 metadata:
-  name: nginx
-  namespace: kapacity-test
+  name: dynamic-predictive-portrait-sample
 spec:
-  maxReplicas: 10
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: nginx
   minReplicas: 1
+  maxReplicas: 10
   portraitProviders:
-  - dynamic:
+  - type: Dynamic
+    priority: 1
+    dynamic:
+      portraitType: Predictive
+      metrics:
+      - type: Resource
+        resource:
+          name: cpu
+          target:
+            type: AverageValue
+            averageValue: 1m
+      - type: External
+        external:
+          metric:
+            name: ready_pods_count
+          target:
+            type: NA
+      - name: qps
+        type: Object
+        object:
+          describedObject:
+            apiVersion: networking.k8s.io/v1
+            kind: Ingress
+            name: nginx-server
+          metric:
+            name: nginx_ingress_controller_requests_rate
+          target:
+            type: NA
       algorithm:
+        type: ExternalJob
         externalJob:
           job:
             type: CronJob
@@ -22,12 +53,10 @@ spec:
                         spec:
                           containers:
                           - name: algorithm
-                            image: kapacity-algorithm:v19
-                            imagePullPolicy: IfNotPresent
                             args:
                             - --tsf-model-path=/opt/kapacity/timeseries/forecasting/model
                             - --tsf-freq=10min
-                            - --re-history-len=4H
+                            - --re-history-len=24H
                             - --re-time-delta-hours=8
                             - --re-test-dataset-size-in-seconds=3600
                             - --scaling-freq=10min
@@ -38,41 +67,7 @@ spec:
                           volumes:
                           - name: model
                             configMap:
-                              name: kapacity-tsf-model
+                              name: example-model
                           restartPolicy: OnFailure
           resultSource:
             type: ConfigMap
-        type: ExternalJob
-      metrics:
-      - type: Resource
-        resource:
-          name: cpu
-          target:
-            averageUtilization: 30
-            type: Utilization
-      - type: External
-        external:
-          metric:
-            name: ready_pods_count
-          target:
-            type: NA
-      - name: qps
-        object:
-          describedObject:
-            apiVersion: networking.k8s.io/v1
-            kind: Ingress
-            name: nginx-server
-          metric:
-            name: rpc
-          target:
-            type: Value
-            value: 30
-        type: Object
-      portraitType: Predictive
-    priority: 10
-    type: Dynamic
-  scaleMode: Auto
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: StatefulSet
-    name: nginx

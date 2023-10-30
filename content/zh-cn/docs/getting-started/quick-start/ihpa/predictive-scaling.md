@@ -6,44 +6,81 @@ weight: 3
 
 ## 准备开始
 
-你需要拥有一个安装了 Kapacity、Prometheus 的 Kubernetes 集群。
+你需要拥有一个安装了 Kapacity 与 Prometheus 的 Kubernetes 集群。
 
-## 安装 Ingress Controller
+请确保你的 Kubernetes 集群中有可用的 DNS（如 [CoreDNS](https://coredns.io/)）来解析 Service 域名。如果没有，则需要对 Kapacity 做如下配置调整：
 
-参考 <a href="https://kubernetes.github.io/ingress-nginx/user-guide/monitoring/" target="_blank"> Ingress Controller
-官方文档 </a> 进行安装，并修改配置以支持 Prometheus 采集 Ingress 指标数据，注意在 Prometheus 控制台验证是否正确采集。
-
-## 添加 Ingress 自定义指标
-
-在 kapacity 的 metrics config 里加入 ingress 自定义指标 **nginx_ingress_controller_requests_rate**，然后重启 kapacity
+使用如下命令查看 Kapacity gRPC Server 的 ClusterIP 和端口：
 
 ```shell
-kubectl edit cm kapacity-config -nkapacity-system
+kubectl get svc -n kapacity-system kapacity-grpc-service
+```
+
+```
+NAME                    TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
+kapacity-grpc-service   ClusterIP   192.168.38.172   <none>        9090/TCP   5m
+```
+
+使用如下命令更新 Kapacity 的配置，其中的 Kapacity gRPC Server 地址相关参数即为上一步查看到的值：
+
+```shell
+helm upgrade \
+  kapacity-manager kapacity/kapacity-manager \
+  --reuse-values \
+  --set algorithmJob.defaultMetricsServerAddr=<kapacity-grpc-server-clusterip>:<kapacity-grpc-server-port> 
+```
+
+## 安装并配置 Ingress NGINX Controller
+
+Kapacity IHPA 的预测式扩缩容使用「[基于流量驱动的副本数预测](/zh-cn/docs/user-guide/ihpa/concepts/predictive-scaling-principles/#基于流量驱动的副本数预测)」算法，因此我们需要至少一条流量指标来使用预测式扩缩容。这里我们使用 Ingress NGINX 作为工作负载入口流量的例子。
+
+如果你的 Kubernetes 集群中还没有 Ingress NGINX Controller，请参考[官方文档](https://kubernetes.github.io/ingress-nginx/deploy/)进行安装。
+
+安装完成后，请按照[此文档](https://kubernetes.github.io/ingress-nginx/user-guide/monitoring/)进行配置以确保 Prometheus 能够采集 Ingress NGINX 的指标。
+
+## 配置 Kapacity 以识别 Ingress NGINX 指标
+
+使用如下命令在 Kapacity 的自定义 Prometheus 指标配置中加入 Ingress NGINX 的指标：
+
+```shell
+kubectl edit cm -n kapacity-system kapacity-config
 ```
 
 ```yaml
-kind: ConfigMap
 apiVersion: v1
-...
 data:
   prometheus-metrics-config.yaml: |
-    # 新增 nginx ingress 请求自定义指标
+    resourceRules:
+      ...
+    # 在 rules 中加入 Ingress NGINX 的指标
     rules:
-    - seriesQuery: '{__name__=~"^nginx_ingress_controller_requests.*",namespace!=""}'
-      seriesFilters: []
-      resources:
-        template: "<<.Resource>>"
+    - seriesQuery: '{__name__="nginx_ingress_controller_requests"}'
+      metricsQuery: round(sum(irate(<<.Series>>{<<.LabelMatchers>>}[3m])) by (<<.GroupBy>>), 0.001)
       name:
-        matches: ""
-        as: "nginx_ingress_controller_requests_rate"
-      metricsQuery: "round(sum(rate(<<.Series>>{<<.LabelMatchers>>}[3m])) by (<<.GroupBy>>), 0.001)"
+        as: nginx_ingress_controller_requests_rate
+      resources:
+        template: <<.Resource>>
+        # 注意：当且仅当你的 Prometheus 是用 Prometheus Operator 安装的，才需要写下面的 overrides 字段
+        overrides:
+          exported_namespace:
+            resource: namespace
     externalRules:
       ...
+kind: ConfigMap
+...
+```
+
+可以看到，该配置与 [Prometheus Adapter 的配置](https://github.com/kubernetes-sigs/prometheus-adapter/blob/master/docs/config.md)完全兼容，更多背景信息可参考[此用户指南](/zh-cn/docs/user-guide/custom-metrics)。
+
+随后，使用如下命令重启 Kapacity Manager 以加载最新配置：
+
+```shell
+kubectl rollout restart -n kapacity-system deploy/kapacity-manager
 ```
 
 ## 运行示例工作负载
 
-1. 下载 [nginx-statefulset.yaml](/examples/workload/nginx-statefulset.yaml) 文件，并通过 kubectl 创建一个 NGINX 服务：
+1. 下载 [nginx-statefulset.yaml](/examples/workload/nginx-statefulset.yaml) 文件，并执行以下命令以运行一个 NGINX 服务：
 
 ```shell
 kubectl apply -f nginx-statefulset.yaml
@@ -60,61 +97,50 @@ NAME      READY   STATUS    RESTARTS   AGE
 nginx-0   1/1     Running   0          5s
 ```
 
-2. 下载 [nginx-ingress.yaml](/examples/workload/nginx-ingress.yaml) 文件，并通过 kubectl 命令创建一个 ingress 服务：
+2. 下载 [nginx-ingress.yaml](/examples/workload/nginx-ingress.yaml) 文件，并执行以下命令以为 NGINX 服务创建一个 Ingress：
 
 ```shell
 kubectl apply -f nginx-ingress.yaml
 ```
 
-验证 ingress 创建成功
+验证 Ingress 创建成功，并记录下 Ingress 的 ADDRESS：
 
 ```shell
-kubectl get ingress
+kubectl get ing
 ```
+
+```
+NAME           CLASS   HOSTS               ADDRESS           PORTS   AGE
+nginx-server   nginx   nginx.example.com   139.224.120.211   80      2d
+```
+
+3. 下载 [periodic-client.yaml](/examples/workload/periodic-client.yaml) 文件，将其中的 `<nginx-ingress-address>` 替换为上一步记录的 Ingress 的 ADDRESS，随后执行以下命令创建一个按周期性（以 1 小时为 1 个周期）规律向 NGINX 服务发送请求的客户端 Pod：
 
 ```shell
-NAME           CLASS   HOSTS                  ADDRESS     PORTS   AGE
-nginx-server   nginx   nginx.example.com      localhost   80      2d
+kubectl apply -f periodic-client.yaml
 ```
 
-3. 运行脚本模拟业务请求，产生训练所需数据集。
+它会产生如下图所示的周期性流量：
 
-下载 [test-client.yaml](/examples/workload/test-client.yaml)，通过 kubectl 命令启动一个不同的 Pod
-作为客户端，通过脚本周期性(每小时为1个周期)向 NGINX 服务发出请求，模拟周期性业务负载：
+<img src="/images/en/periodic-traffic-metric.png" width="1000"/>
+
+由于算法学习需要一定数据量，建议至少运行 24 小时后再进行后续步骤。
+
+## 训练时序预测模型
+
+请参考[用户指南](/zh-cn/docs/user-guide/algorithm/train-tsf-model/)使用[该配置](/examples/algorithm/tsf-model-train-config.yaml)完成时序预测模型的训练，随后执行以下命令将模型及其附属文件保存为一个 ConfigMap 供后续算法任务使用，其中的 `<model-save-path>` 请替换为实际的模型保存目录路径：
 
 ```shell
-kubectl apply -f test-client.yaml
+kubectl create cm -n kapacity-system example-model --from-file=<model-save-path>
 ```
 
-周期性流量示意图：
+{{% alert title="说明" %}}
+在实际使用中我们可能会得到更大的模型，此时建议将模型文件存储到[持久卷](https://kubernetes.io/zh-cn/docs/concepts/storage/persistent-volumes/)而非 ConfigMap。
+{{% /alert %}}
 
-<img src="/images/en/workload-metrics.png" width="80%"/>
+## 创建配置了动态预测式画像源的 IHPA
 
-
-由于训练所需数据集较大，建议至少运行24小时以后再进行模型训练
-
-## 训练预测模型
-
-通过 [时序预测模型训练](/zh-cn/docs/user-guide/algorithm/predictive-model-training) 提前生成好模型，保存模型文件到单独目录。
-
-```shell
--rw-r--r--@ 1 admin  staff   316K Oct 11 17:29 checkpoint.pth
--rw-r--r--@ 1 admin  staff   286B Oct 11 17:30 estimator_config.yaml
--rw-r--r--@ 1 admin  staff    29B Oct 11 17:30 item2id.json
-```
-
-保存预测模型到 configmap
-
-```shell
-kubectl -n <your-namespace> create configmap kapacity-tsf-model --from-file=<your-model-path>
-```
-
-其中 your-namespace 和 your-model-path 需要替换为自己的命名空间和模型目录。
-
-## 创建配置了预测式画像源的 IHPA
-
-下载 [dynamic-predictive-portrait-sample.yaml](/examples/ihpa/dynamic-predictive-portrait-sample.yaml) 文件，编辑该yaml文件，其中
-algorithm-image-id 需要替换为真实的算法镜像ID，具体内容如下所示：
+下载 [dynamic-predictive-portrait-sample.yaml](/examples/ihpa/dynamic-predictive-portrait-sample.yaml) 文件，其内容如下所示：
 
 ```yaml
 apiVersion: autoscaling.kapacitystack.io/v1alpha1
@@ -122,11 +148,43 @@ kind: IntelligentHorizontalPodAutoscaler
 metadata:
   name: dynamic-predictive-portrait-sample
 spec:
-  maxReplicas: 10
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: nginx
   minReplicas: 1
+  maxReplicas: 10
   portraitProviders:
-  - dynamic:
+  - type: Dynamic
+    priority: 1
+    dynamic:
+      portraitType: Predictive
+      metrics:
+      - type: Resource
+        resource:
+          name: cpu
+          target:
+            type: AverageValue
+            averageValue: 1m
+      - type: External
+        external:
+          metric:
+            name: ready_pods_count
+          target:
+            type: NA
+      - name: qps
+        type: Object
+        object:
+          describedObject:
+            apiVersion: networking.k8s.io/v1
+            kind: Ingress
+            name: nginx-server
+          metric:
+            name: nginx_ingress_controller_requests_rate
+          target:
+            type: NA
       algorithm:
+        type: ExternalJob
         externalJob:
           job:
             type: CronJob
@@ -140,15 +198,13 @@ spec:
                         spec:
                           containers:
                           - name: algorithm
-                            image: <algorithm-image-id>
-                            imagePullPolicy: IfNotPresent
                             args:
                             - --tsf-model-path=/opt/kapacity/timeseries/forecasting/model
                             - --tsf-freq=10min
-                            - --re-history-len=48H
+                            - --re-history-len=24H
                             - --re-time-delta-hours=8
+                            - --re-test-dataset-size-in-seconds=3600
                             - --scaling-freq=10min
-                            - --re-test-dataset-size-in-seconds=86400
                             volumeMounts:
                             - name: model
                               mountPath: /opt/kapacity/timeseries/forecasting/model
@@ -156,50 +212,29 @@ spec:
                           volumes:
                           - name: model
                             configMap:
-                              name: kapacity-tsf-model
+                              name: example-model
                           restartPolicy: OnFailure
           resultSource:
             type: ConfigMap
-        type: ExternalJob
-      metrics:
-      - type: Resource
-        resource:
-          name: cpu
-          target:
-            averageUtilization: 30
-            type: Utilization
-      - type: External
-        external:
-          metric:
-            name: ready_pods_count
-          target:
-            type: NA
-      - type: Object
-        name: qps
-        object:
-          describedObject:
-            apiVersion: networking.k8s.io/v1
-            kind: Ingress
-            name: nginx-server
-          metric:
-            name: nginx_ingress_controller_requests_rate
-          target:
-            type: NA
-      portraitType: Predictive
-    priority: 10
-    type: Dynamic
-  scaleMode: Auto
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: StatefulSet
-    name: nginx
 ```
 
-在预测算法中我们约定了 metrics 的指标类型和顺序：
+请将算法参数 `--re-time-delta-hours` 的值替换成你所在时区的 UTC 偏移值，如 UTC+8 时区则填写 `8`，UTC-7 时区则填写 `-7`。
 
-- 第一个指标为资源指标，类型为 Resource ，用于查询资源（cpu、mem）历史水位。
-- 第二个指标为副本数指标，类型为 External ，用于查询可用副本数历史数据。
-- 第三个及其他为流量指标，用户可以自己根据需要选择类型，用于查询流量（rpc、msg、pv等）历史数据。
+下面简单解释该 IHPA 的一些配置：
+
+先来看指标，在「基于流量驱动的副本数预测」算法中，我们需要多类指标来共同驱动该算法，因此我们约定了下面的指标配置规范：
+
+- 第一个指标应当配置为该工作负载的目标资源指标，因此类型只能为 `Resource` 或者 `ContainerResource`。它指定了我们期望 IHPA 帮我们维持的目标资源水位。
+- 第二个指标应当配置为该工作负载的在线副本数指标，算法会使用该指标查询该工作负载的历史 Ready Pod（即承载流量的 Pod）的数量。该指标的类型只能为 `External`，它会在工作负载维度按照 Pod 名称正则匹配做聚合查询，Kapacity 默认配置了基于 kube-state-metrics 的 `ready_pods_count` 指标可供直接使用。需要注意的是，由于该指标仅用于历史查询，我们不需要为它指定目标值，因此这里我们将其 `target` 的 `type` 写为一个占位符 `NA`。
+- 第三个及以后的指标应当配置为和该工作负载的目标资源指标存在正相关的流量指标（如 QPS、RPC 等），算法会对这些指标进行时序预测，随后基于历史资源水位和副本数，给出未来能够满足目标资源水位的预测副本数。这些指标的类型可以是除了 `Resource` 和 `ContainerResource` 的任意类型，**但注意必须为这些指标设置与训练时设置的相同的 `name`**。同样地，这些指标也仅用于历史查询，因此不需要设定目标值。
+
+再来看算法参数，这里简单说明其中几个关键参数的作用，更多信息可参考算法脚本自身的 flags 说明：
+
+- `--tsf-freq`：该参数指定了流量时序预测的精度，需与训练模型时的 `freq` 参数保持一致。
+- `--re-history-len`：该参数指定了副本数推荐算法学习的历史长度，一般建议至少覆盖应用的两个行为周期。
+- `--re-time-delta-hours`：该参数指定了应用所在时区的 UTC 偏移值，副本数推荐算法需要感知时区信息以学习时间特征。
+- `--re-test-dataset-size-in-seconds`：该参数指定了副本数推荐算法学习的测试集大小，默认为一天（86400），只有历史长度不足一天时才需要将其改短，如本示例中设置为一小时（3600）。
+- `--scaling-freq`：该参数指定了算法最终输出的副本数预测结果的精度，即最终实际扩缩容的最高频率，因此其不能短于算法的原始预测精度 `--tsf-freq`。算法会按照给定的精度对原始预测结果按最大值做重采样后输出，比如如果该参数设置为 1 小时，则算法最终会给出每小时该工作负载所需的最大副本数，最终该工作负载最多每小时进行一次扩缩容。
 
 执行以下命令创建该 IHPA：
 
@@ -209,67 +244,77 @@ kubectl apply -f dynamic-predictive-portrait-sample.yaml
 
 ## 验证结果
 
-1. IHPA 的 portrait provider 创建 CronJob 启动预测式算法 job
+1. 验证 IHPA 自动创建了运行算法任务的 CronJob，且上一次任务运行成功：
 
 ```shell
-kubectl get cronjob
+kubectl get cj -n kapacity-system
+```
+
+```
+NAME                                                    SCHEDULE       SUSPEND   ACTIVE   LAST SCHEDULE   AGE
+default-dynamic-predictive-portrait-sample-predictive   0/30 * * * *   False     1        26m             2d1h
 ```
 
 ```shell
-NAME                                 SCHEDULE       SUSPEND   ACTIVE   LAST SCHEDULE   AGE
-dynamic-predictive-portrait-sample   0/30 * * * *   False     1        26m             2d1h
+kubectl get job -n kapacity-system
 ```
+
+```
+NAME                                                             COMPLETIONS   DURATION   AGE
+default-dynamic-predictive-portrait-sample-predictive-28286564   1/1           16s        28m
+```
+
+2. 验证算法结果成功写入了 IHPA 的预测式水平画像：
 
 ```shell
-kubectl get job
+kubectl get hp dynamic-predictive-portrait-sample-predictive -o yaml
 ```
-
-```shell
-NAME                                          COMPLETIONS   DURATION   AGE
-dynamic-predictive-portrait-sample-28286564   1/1           16s        28m
-```
-
-2. 预测式算法 job 运行成功后回写结果到 configmap
-
-```shell
-kubectl get cm dynamic-predictive-portrait-sample-result -oyaml
-```
-
-可以看到生成了未来 3 个时间点的副本数预测结果
 
 ```yaml
-apiVersion: v1
-data:
-  expireTime: "2023-10-13T13:00:00.00Z"
-  timeSeries: '{"1697200200": 3, "1697200800": 2, "1697201400": 1}'
-  type: TimeSeries
-kind: ConfigMap
+apiVersion: autoscaling.kapacitystack.io/v1alpha1
+kind: HorizontalPortrait
 metadata:
-  name: dynamic-predictive-portrait-sample-result
-  ownerReferences:
-  - apiVersion: autoscaling.kapacitystack.io/v1alpha1
-    blockOwnerDeletion: true
-    controller: true
-    kind: HorizontalPortrait
-    name: dynamic-predictive-portrait-sample
-    uid: 8e0ea542-6e7d-4529-83dc-efcfdec8ec6e
+  name: dynamic-predictive-portrait-sample-predictive
+  namespace: default
+  ...
+spec:
+  ...
+status:
+  conditions:
+  - lastTransitionTime: "2023-10-25T11:00:00Z"
+    message: portrait has been successfully generated
+    observedGeneration: 1
+    reason: SucceededGeneratePortrait
+    status: "True"
+    type: PortraitGenerated
+  portraitData:
+    expireTime: "2023-10-25T11:30:00Z"
+    timeSeries:
+      timeSeries:
+      - replicas: 4
+        timestamp: 1698231600
+      - replicas: 3
+        timestamp: 1698232200
+      - replicas: 2
+        timestamp: 1698232800
+    type: TimeSeries
 ```
 
-3. 根据预测的结果执行副本变更
+3. 验证 IHPA 按算法的预测结果对工作负载的副本数进行调整：
 
 ```shell
- kubectl describe ihpa dynamic-predictive-portrait-sample
+kubectl describe ihpa dynamic-predictive-portrait-sample
 ```
 
-```shell
+```
+...
 Events:
   Type     Reason                Age                 From             Message
   ----     ------                ----                ----             -------
   Warning  NoValidPortraitValue  29m (x10 over 85m)  ihpa_controller  no valid portrait value for now
-  Normal   UpdateReplicaProfile  25m                 ihpa_controller  update ReplicaProfile with onlineReplcas: 1 -> 3, cutoffReplicas: 0 -> 0, standbyReplicas: 0 -> 0
-  Normal   UpdateReplicaProfile  15m                 ihpa_controller  update ReplicaProfile with onlineReplcas: 3 -> 2, cutoffReplicas: 0 -> 0, standbyReplicas: 0 -> 0
-  Normal   UpdateReplicaProfile  5m9s                ihpa_controller  update ReplicaProfile with onlineReplcas: 2 -> 1, cutoffReplicas: 0 -> 0, standbyReplicas: 0 -> 0
-
+  Normal   UpdateReplicaProfile  25m                 ihpa_controller  update ReplicaProfile with onlineReplcas: 1 -> 4, cutoffReplicas: 0 -> 0, standbyReplicas: 0 -> 0
+  Normal   UpdateReplicaProfile  15m                 ihpa_controller  update ReplicaProfile with onlineReplcas: 4 -> 3, cutoffReplicas: 0 -> 0, standbyReplicas: 0 -> 0
+  Normal   UpdateReplicaProfile  5m9s                ihpa_controller  update ReplicaProfile with onlineReplcas: 3 -> 2, cutoffReplicas: 0 -> 0, standbyReplicas: 0 -> 0
 ```
 
 ## 清理资源
@@ -278,7 +323,7 @@ Events:
 
 ```shell
 kubectl delete -f dynamic-predictive-portrait-sample.yaml
-kubectl delete -f test-client.yaml
+kubectl delete -f periodic-client.yaml
 kubectl delete -f nginx-ingress.yaml
 kubectl delete -f nginx-statefulset.yaml
 ```
