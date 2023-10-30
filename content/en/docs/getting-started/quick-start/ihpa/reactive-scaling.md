@@ -10,7 +10,7 @@ You need to have a Kubernetes cluster with Kapacity and Prometheus installed.
 
 ## Run sample workload
 
-Download [nginx-statefulset.yaml](/examples/workload/nginx-statefulset.yaml) and run following command to run an NGINX workload.
+Download [nginx-statefulset.yaml](/examples/workload/nginx-statefulset.yaml) and run following command to run an NGINX workload:
 
 ```shell
 kubectl apply -f nginx-statefulset.yaml
@@ -37,6 +37,10 @@ kind: IntelligentHorizontalPodAutoscaler
 metadata:
   name: dynamic-reactive-portrait-sample
 spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: nginx
   minReplicas: 1
   maxReplicas: 10
   portraitProviders:
@@ -53,10 +57,6 @@ spec:
             averageUtilization: 30
       algorithm:
         type: KubeHPA
-  scaleTargetRef:
-    kind: StatefulSet
-    name: nginx
-    apiVersion: apps/v1
 ```
 
 Run following command to create the IHPA:
@@ -82,7 +82,7 @@ Start a different pod to act as a client which will send requests to the NGINX s
 
 ```shell
 # Run this in a separate terminal so that the load generation continues and you can carry on with the rest of the steps
-kubectl run -i --tty load-generator --rm --image=busybox:1.28 --restart=Never -- /bin/sh -c "while sleep 0.01; do wget -q -O- http://<service-ip>:<service-port>; done"
+kubectl run -i --tty load-generator --rm --image=busybox --restart=Never -- /bin/sh -c "while sleep 0.01; do wget -q -O- http://<service-ip>:<service-port> > /dev/null; done"
 ```
 
 After several minutes, you can see that the workload is scaled up by checking events of the IHPA:
