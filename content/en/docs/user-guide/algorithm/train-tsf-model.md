@@ -15,10 +15,10 @@ Before getting started, please make sure that [Conda](https://docs.conda.io/en/l
 
 ## Install dependencies
 
-Execute the following command to download the code of the Kapacity version you are using, install algorithm dependencies, and activate the algorithm runtime environment:
+Execute the following command to download the code of the Kapacity algorithm version you are using, install algorithm dependencies, and activate the algorithm runtime environment:
 
 ```shell
-git clone -b release-<your-kapacity-version> https://github.com/traas-stack/kapacity.git
+git clone --depth 1 -b algorithm-<your-kapacity-algorithm-version> https://github.com/traas-stack/kapacity.git
 cd kapacity/algorithm
 conda env create -f environment.yml
 conda activate kapacity
