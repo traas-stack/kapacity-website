@@ -30,6 +30,7 @@ Use the following command to update the configuration of Kapacity, where the par
 ```shell
 helm upgrade \
   kapacity-manager kapacity/kapacity-manager \
+  --namespace kapacity-system \
   --reuse-values \
   --set algorithmJob.defaultMetricsServerAddr=<kapacity-grpc-server-clusterip>:<kapacity-grpc-server-port> 
 ```
@@ -64,10 +65,10 @@ data:
         as: nginx_ingress_controller_requests_rate
       resources:
         template: <<.Resource>>
-        # note: the overrides field below needs to be written only if your Prometheus is installed with Prometheus Operator
-        overrides:
-          exported_namespace:
-            resource: namespace
+        # note: uncomment the overrides field below if your Prometheus is installed with Prometheus Operator
+        # overrides:
+        #   exported_namespace:
+        #     resource: namespace
     externalRules:
       ...
 kind: ConfigMap
@@ -81,6 +82,10 @@ Then, use the following command to restart Kapacity Manager to load the latest c
 ```shell
 kubectl rollout restart -n kapacity-system deploy/kapacity-manager
 ```
+
+{{% alert title="Notice" %}}
+Kapacity Manager requires some time to sync the custom metric configuration from Prometheus after startup. If there are many metrics within Prometheus, it might take a considerable amount of time (usually several minutes). You can determine whether the synchronization is complete by checking the standard output logs of the Kapacity Manager Pod for the message `metrics relisted successfully`. Please wait for Kapacity Manager to finish synchronizing the custom metrics before proceeding with subsequent steps.
+{{% /alert %}}
 
 ## Run sample workload
 
@@ -150,7 +155,7 @@ Download [dynamic-predictive-portrait-sample.yaml](/examples/ihpa/dynamic-predic
 apiVersion: autoscaling.kapacitystack.io/v1alpha1
 kind: IntelligentHorizontalPodAutoscaler
 metadata:
-  name: dynamic-predictive-portrait-sample
+  name: predictive-sample
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
@@ -170,10 +175,10 @@ spec:
           target:
             type: AverageValue
             averageValue: 1m
-      - type: External
-        external:
+      - type: Pods
+        pods:
           metric:
-            name: ready_pods_count
+            name: kube_pod_status_ready
           target:
             type: NA
       - name: qps
@@ -204,7 +209,6 @@ spec:
                           - name: algorithm
                             args:
                             - --tsf-model-path=/opt/kapacity/timeseries/forecasting/model
-                            - --tsf-freq=10min
                             - --re-history-len=24H
                             - --re-time-delta-hours=8
                             - --re-test-dataset-size-in-seconds=3600
@@ -227,16 +231,15 @@ Please replace the value of the algorithm parameter `--re-time-delta-hours` with
 Let's look at the metrics first. In the "Traffic-driven replica prediction" algorithm, we need multiple types of metrics to jointly drive the algorithm, so we have agreed on the following metric configuration specification:
 
 - The first metric should be configured as the target resource metric of this workload, so the type can only be `Resource` or `ContainerResource`. It specifies the target resource level we expect IHPA to help us maintain.
-- The second metric should be configured as the online replica count metric of this workload. The algorithm will use this metric to query the historical Ready Pod (i.e., the Pod carrying traffic) count of this workload. The type of this metric can only be `External`. It will be aggregated on the workload dimension by regular matching of the Pod name for the query. Kapacity defaults to the `ready_pods_count` metric based on kube-state-metrics for direct use. Note that since this metric is only used for historical query, we do not need to specify a target value for it. Therefore, we write a placeholder `NA` for its `target` `type`.
+- The second metric should be configured as the online replica count metric of this workload. The algorithm will use this metric to query the historical Ready Pod (i.e., the Pod carrying traffic) count of this workload. The type of this metric can only be `Pods`. It will be aggregated on the workload dimension by regular matching of the Pod name for the query. Kapacity defaults to the `kube_pod_status_ready` metric based on kube-state-metrics for direct use. Note that since this metric is only used for historical query, we do not need to specify a target value for it. Therefore, we write a placeholder `NA` for its `target` `type`.
 - The third and subsequent metrics should be configured as traffic metrics (such as QPS, RPC, etc.) that are positively correlated with the target resource metric of this workload. The algorithm will perform time series prediction on these metrics, and then based on the historical resource level and replica count, it will give a predicted replica count that can meet the target resource level in the future. These metrics can be of any type other than `Resource` and `ContainerResource`, but **note that you must set the same `name` for these metrics as set during training**. Similarly, these metrics are also only used for historical queries, so you do not need to set target values.
 
 Then let's look at the algorithm parameters. Here is a brief explanation of the functions of a few key parameters. More information can be referred to the flags description of the algorithm script itself:
 
-- `--tsf-freq`: This parameter specifies the accuracy of traffic time series prediction, it should be consistent with the `freq` parameter during model training.
 - `--re-history-len`: This parameter specifies the historical length of the replica recommendation algorithm learning, it is generally recommended to cover at least two behavioral cycles of the application.
 - `--re-time-delta-hours`: This parameter specifies the UTC offset value of the time zone where the application is located, the replica number recommendation algorithm needs to sense the time zone information to learn the time features.
 - `--re-test-dataset-size-in-seconds`: This parameter specifies the test set size of the replica recommendation algorithm learning, default is one day (86400), only when the historical length is less than one day do you need to shorten it, such as setting it as one hour (3600) in this example.
-- `--scaling-freq`: This parameter specifies the accuracy of the final replica number prediction result of the algorithm, that is, the maximum frequency of actual scaling, so it cannot be shorter than the original prediction accuracy of the algorithm `--tsf-freq`. The algorithm will resample the original prediction result by the maximum value according to the given accuracy and output it. For example, if this parameter is set to 1 hour, the algorithm will finally give the maximum number of replicas needed by this workload every hour, and finally this workload will scale up and down at most once an hour.
+- `--scaling-freq`: This parameter specifies the accuracy of the final replica number prediction result of the algorithm, that is, the maximum frequency of actual scaling, so it cannot be shorter than the original prediction accuracy of the timeseries forecasting algorithm (the `freq` parameter used in timeseries forecasting model training). The algorithm will resample the original prediction result by the maximum value according to the given accuracy and output it. For example, if this parameter is set to 1 hour, the algorithm will finally give the maximum number of replicas needed by this workload every hour, and finally this workload will scale up and down at most once an hour.
 
 Execute the following command to create this IHPA:
 
@@ -253,8 +256,8 @@ kubectl get cj -n kapacity-system
 ```
 
 ```
-NAME                                                    SCHEDULE       SUSPEND   ACTIVE   LAST SCHEDULE   AGE
-default-dynamic-predictive-portrait-sample-predictive   0/30 * * * *   False     1        26m             2d1h
+NAME                                   SCHEDULE       SUSPEND   ACTIVE   LAST SCHEDULE   AGE
+default-predictive-sample-predictive   0/30 * * * *   False     1        26m             2d1h
 ```
 
 ```shell
@@ -262,21 +265,21 @@ kubectl get job -n kapacity-system
 ```
 
 ```
-NAME                                                             COMPLETIONS   DURATION   AGE
-default-dynamic-predictive-portrait-sample-predictive-28286564   1/1           16s        28m
+NAME                                            COMPLETIONS   DURATION   AGE
+default-predictive-sample-predictive-28286564   1/1           16s        28m
 ```
 
 2. Verify that the algorithm result was successfully written to the predictive horizontal portrait of IHPA:
 
 ```shell
-kubectl get hp dynamic-predictive-portrait-sample-predictive -o yaml
+kubectl get hp predictive-sample-predictive -o yaml
 ```
 
 ```yaml
 apiVersion: autoscaling.kapacitystack.io/v1alpha1
 kind: HorizontalPortrait
 metadata:
-  name: dynamic-predictive-portrait-sample-predictive
+  name: predictive-sample-predictive
   namespace: default
   ...
 spec:
@@ -305,7 +308,7 @@ status:
 3. Verify that IHPA has adjusted the replica count of the workload according to the prediction result of the algorithm:
 
 ```shell
-kubectl describe ihpa dynamic-predictive-portrait-sample
+kubectl describe ihpa predictive-sample
 ```
 
 ```
