@@ -11,10 +11,10 @@ weight: 1
 
 ## 安装依赖
 
-执行以下命令以下载你所使用的 Kapacity 版本的代码、安装算法依赖并激活算法运行环境：
+执行以下命令以下载你所使用的 Kapacity 算法版本的代码、安装算法依赖并激活算法运行环境：
 
 ```shell
-git clone -b release-<your-kapacity-version> https://github.com/traas-stack/kapacity.git
+git clone --depth 1 -b algorithm-<your-kapacity-algorithm-version> https://github.com/traas-stack/kapacity.git
 cd kapacity/algorithm
 conda env create -f environment.yml
 conda activate kapacity

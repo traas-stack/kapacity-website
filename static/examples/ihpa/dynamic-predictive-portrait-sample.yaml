@@ -1,7 +1,7 @@
 apiVersion: autoscaling.kapacitystack.io/v1alpha1
 kind: IntelligentHorizontalPodAutoscaler
 metadata:
-  name: dynamic-predictive-portrait-sample
+  name: predictive-sample
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
@@ -21,10 +21,10 @@ spec:
           target:
             type: AverageValue
             averageValue: 1m
-      - type: External
-        external:
+      - type: Pods
+        pods:
           metric:
-            name: ready_pods_count
+            name: kube_pod_status_ready
           target:
             type: NA
       - name: qps
@@ -55,7 +55,6 @@ spec:
                           - name: algorithm
                             args:
                             - --tsf-model-path=/opt/kapacity/timeseries/forecasting/model
-                            - --tsf-freq=10min
                             - --re-history-len=24H
                             - --re-time-delta-hours=8
                             - --re-test-dataset-size-in-seconds=3600
